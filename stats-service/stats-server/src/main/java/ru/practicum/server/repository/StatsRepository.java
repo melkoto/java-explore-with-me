@@ -6,13 +6,14 @@ import org.springframework.stereotype.Repository;
 import ru.practicum.dto.ResponseDto;
 import ru.practicum.server.model.Stats;
 
+import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
 public interface StatsRepository extends JpaRepository<Stats, Long> {
     @Query(value =
-            "SELECT s.app, s.uri, COUNT(s.ip) " +
+            "SELECT new ru.practicum.dto.ResponseDto(s.app, s.uri, COUNT(s.ip)) " +
                     "FROM Stats s " +
                     "WHERE s.created BETWEEN ?1 AND ?2 " +
                     "GROUP BY s.app, s.uri " +
@@ -20,7 +21,7 @@ public interface StatsRepository extends JpaRepository<Stats, Long> {
     List<ResponseDto> getStats(LocalDateTime start, LocalDateTime end);
 
     @Query(value =
-            "SELECT s.app, s.uri, COUNT(DISTINCT s.ip) " +
+            "SELECT new ru.practicum.dto.ResponseDto(s.app, s.uri, COUNT(DISTINCT s.ip)) " +
                     "FROM Stats s " +
                     "WHERE s.created BETWEEN ?1 AND ?2 " +
                     "GROUP BY s.app, s.uri " +
@@ -28,7 +29,7 @@ public interface StatsRepository extends JpaRepository<Stats, Long> {
     List<ResponseDto> getStatsWithUniqueIp(LocalDateTime start, LocalDateTime end);
 
     @Query(value =
-            "SELECT s.app, s.uri, COUNT(DIStiNCT s.ip) " +
+            "SELECT new ru.practicum.dto.ResponseDto(s.app, s.uri, COUNT(DIStiNCT s.ip)) " +
                     "FROM Stats s " +
                     "WHERE s.created BETWEEN ?1 AND ?2 " +
                     "AND s.uri IN ?3 " +
@@ -36,11 +37,12 @@ public interface StatsRepository extends JpaRepository<Stats, Long> {
                     "ORDER BY COUNT(s.ip) DESC")
     List<ResponseDto> getStatsWithUniqueIpByUris(LocalDateTime start, LocalDateTime end, List<String> uris);
 
+    @Transactional
     @Query(value =
-            "SELECT s.app, s.uri, COUNT(s.ip) " +
+            "SELECT new ru.practicum.dto.ResponseDto(s.app, s.uri, COUNT(s.ip)) " +
                     "FROM Stats s " +
                     "WHERE s.created BETWEEN ?1 AND ?2 " +
-                    "AND s.uri IN ?3 " +
+                    "AND s.uri IN (?3) " +
                     "GROUP BY s.app, s.uri " +
                     "ORDER BY COUNT(s.ip) DESC")
     List<ResponseDto> getStatsByUris(LocalDateTime start, LocalDateTime end, List<String> uris);

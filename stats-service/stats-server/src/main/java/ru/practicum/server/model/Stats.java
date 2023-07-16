@@ -24,4 +24,7 @@ public class Stats {
 
     @Column(name = "created")
     private LocalDateTime created;
+
+    @Transient
+    private long hits;
 }

@@ -29,7 +29,7 @@ public class StatsClient extends BaseClient {
 
     public ResponseEntity<Object> save(String app, String uri, String ip, LocalDateTime time) {
         log.info("Saving hit for app: {}, uri: {}, ip: {}, time: {}", app, uri, ip, time);
-        return post("/hit", new RequestDto(app, uri, ip, time));
+        return post("/hit", new RequestDto(app, uri, ip, getFormattedTime(time)));
     }
 
     public ResponseEntity<Object> get(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
