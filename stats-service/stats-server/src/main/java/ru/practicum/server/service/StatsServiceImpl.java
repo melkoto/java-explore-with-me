@@ -7,10 +7,7 @@ import ru.practicum.dto.ResponseDto;
 import ru.practicum.server.mapper.StatsMapper;
 import ru.practicum.server.repository.StatsRepository;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -37,32 +34,17 @@ public class StatsServiceImpl implements StatsService {
 
     private List<ResponseDto> getStatsBasedOnParams(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
         if (isUriEmpty(uris)) {
-            return getStatsForEmptyUri(start, end, unique);
+            return unique
+                    ? statsRepository.getStatsWithUniqueIp(start, end)
+                    : statsRepository.getStats(start, end);
         } else {
-            return getStatsForNonEmptyUri(start, end, uris, unique);
+            return unique
+                    ? statsRepository.getStatsWithUniqueIpByUris(start, end, uris)
+                    : statsRepository.getStatsByUris(start, end, uris);
         }
     }
 
     private boolean isUriEmpty(List<String> uris) {
         return uris == null || uris.isEmpty();
-    }
-
-    private List<ResponseDto> getStatsForEmptyUri(LocalDateTime start, LocalDateTime end, Boolean unique) {
-        return unique ? statsRepository.getStatsWithUniqueIp(start, end) : statsRepository.getStats(start, end);
-    }
-
-    private List<ResponseDto> getStatsForNonEmptyUri(LocalDateTime start, LocalDateTime end, List<String> uris,
-                                                     Boolean unique) {
-        return unique
-                ? statsRepository.getStatsWithUniqueIpByUris(start, end, uris)
-                : statsRepository.getStatsByUris(start, end, uris);
-    }
-
-    private String encode(LocalDateTime time) {
-        return URLEncoder.encode(getFormattedTime(time), StandardCharsets.UTF_8);
-    }
-
-    private String getFormattedTime(LocalDateTime start) {
-        return start.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
     }
 }
