@@ -10,7 +10,7 @@ spring:
     driverClassName: org.postgresql.Driver
     username: postgres
     password: password
-    url: jdbc:postgresql://localhost:5432/main-db
+    url: jdbc:postgresql://localhost:5432/postgres
   sql:
     init:
       mode: always
