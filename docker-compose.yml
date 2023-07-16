@@ -3,13 +3,51 @@ services:
   stats-server:
     ports:
       - "9090:9090"
+    build: ./stats-service/stats-server
+    container_name: stats-server
+    depends_on:
+      - stats-db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/stats-db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
 
   stats-db:
     image: postgres:14-alpine
+    container_name: stats-db
+    ports:
+      - "6541:5432"
+    volumes:
+      - stats-db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=stats-db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
 
-  ewm-service:
+  main-service:
     ports:
       - "8080:8080"
+    build: ./main-service
+    image: main-service
+    container_name: main-service
+    depends_on:
+      - stats-server
+      - main-db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://main-db:5432/main_db
 
-  ewm-db:
+  main-db:
     image: postgres:14-alpine
+    container_name: main-db
+    ports:
+      - "6542:5432"
+    volumes:
+      - main-db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=main_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+
+volumes:
+  main-db:
+  stats-db:
