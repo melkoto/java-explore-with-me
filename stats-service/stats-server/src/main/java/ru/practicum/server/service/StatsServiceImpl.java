@@ -7,7 +7,10 @@ import ru.practicum.dto.ResponseDto;
 import ru.practicum.server.mapper.StatsMapper;
 import ru.practicum.server.repository.StatsRepository;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -53,5 +56,13 @@ public class StatsServiceImpl implements StatsService {
         return unique
                 ? statsRepository.getStatsWithUniqueIpByUris(start, end, uris)
                 : statsRepository.getStatsByUris(start, end, uris);
+    }
+
+    private String encode(LocalDateTime time) {
+        return URLEncoder.encode(getFormattedTime(time), StandardCharsets.UTF_8);
+    }
+
+    private String getFormattedTime(LocalDateTime start) {
+        return start.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
     }
 }
