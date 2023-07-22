@@ -1,8 +1,10 @@
 package ru.practicum.main.category.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.main.category.dto.CategoryResponseDto;
+import ru.practicum.main.category.service.publical.PublicCategoryService;
 
 import java.util.List;
 
@@ -11,18 +13,23 @@ import java.util.List;
 @Slf4j
 public class PublicCategoryController {
 
+    private final PublicCategoryService publicCategoryService;
+
+    public PublicCategoryController(PublicCategoryService publicCategoryService) {
+        this.publicCategoryService = publicCategoryService;
+    }
+
+
     @GetMapping
-    public List<CategoryResponseDto> getCategories(@RequestParam(value = "from", defaultValue = "0") Integer from,
-                                                   @RequestParam(value = "size", defaultValue = "10") Integer size) {
+    public ResponseEntity<List<CategoryResponseDto>> getCategories(@RequestParam(value = "from", defaultValue = "0") Integer from,
+                                                                   @RequestParam(value = "size", defaultValue = "10") Integer size) {
         log.info("Get categories from: {}, size: {}", from, size);
-        return null;
+        return ResponseEntity.status(200).body(publicCategoryService.getCategories(from, size));
     }
 
     @GetMapping("/{catId}")
-    public CategoryResponseDto getCategory(@PathVariable int catId,
-                                           @RequestParam(value = "from", defaultValue = "0") Integer from,
-                                           @RequestParam(value = "size", defaultValue = "10") Integer size) {
-        log.info("Get category with id: {}, from: {}, size: {}", catId, from, size);
-        return null;
+    public ResponseEntity<CategoryResponseDto> getCategory(@PathVariable int catId) {
+        log.info("Get category with id: {}", catId);
+        return ResponseEntity.status(200).body(publicCategoryService.getCategory(catId));
     }
 }
