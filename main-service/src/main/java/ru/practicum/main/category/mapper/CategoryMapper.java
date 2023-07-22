@@ -1,4 +1,4 @@
-package ru.practicum.main.user.mapper;
+package ru.practicum.main.category.mapper;
 
 import ru.practicum.main.category.dto.CategoryDto;
 import ru.practicum.main.category.dto.CategoryResponseDto;

@@ -8,8 +8,8 @@ import ru.practicum.main.category.repository.AdminCategoryRepository;
 import ru.practicum.main.error.ConflictException;
 import ru.practicum.main.error.NotFoundException;
 
-import static ru.practicum.main.user.mapper.CategoryMapper.mapCategoryDtoToCategory;
-import static ru.practicum.main.user.mapper.CategoryMapper.mapCategoryToCategoryResponseDto;
+import static ru.practicum.main.category.mapper.CategoryMapper.mapCategoryDtoToCategory;
+import static ru.practicum.main.category.mapper.CategoryMapper.mapCategoryToCategoryResponseDto;
 
 @Service
 public class AdminCategoryServiceImpl implements AdminCategoryService {

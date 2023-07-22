@@ -5,12 +5,12 @@ import ru.practicum.main.category.dto.CategoryResponseDto;
 import ru.practicum.main.category.model.Category;
 import ru.practicum.main.category.repository.PublicCategoryRepository;
 import ru.practicum.main.error.NotFoundException;
-import ru.practicum.main.user.mapper.CategoryMapper;
+import ru.practicum.main.category.mapper.CategoryMapper;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static ru.practicum.main.user.mapper.CategoryMapper.mapCategoryToCategoryResponseDto;
+import static ru.practicum.main.category.mapper.CategoryMapper.mapCategoryToCategoryResponseDto;
 
 @Service
 public class PublicCategoryServiceImpl implements PublicCategoryService {
