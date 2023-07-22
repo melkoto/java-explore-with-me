@@ -23,7 +23,7 @@ logging:
             JpaTransactionManager: DEBUG
             nodeValue: INFO
         transaction:
-          interceptor: TRACE
+          interceptor: DEBUG
           nodeValue: INFO
 
 server:

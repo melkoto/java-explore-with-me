@@ -5,6 +5,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.main.category.dto.CategoryDto;
 import ru.practicum.main.category.dto.CategoryResponseDto;
+import ru.practicum.main.category.service.CategoryService;
 
 import javax.validation.Valid;
 
@@ -14,10 +15,16 @@ import javax.validation.Valid;
 @Validated
 public class AdminCategoryController {
 
+    private final CategoryService categoryService;
+
+    public AdminCategoryController(CategoryService categoryService) {
+        this.categoryService = categoryService;
+    }
+
     @PostMapping
     public CategoryResponseDto addCategory(@Valid @RequestBody CategoryDto categoryDto) {
         log.info("Add category with name: {}", categoryDto.getName());
-        return null;
+        return categoryService.addCategory(categoryDto);
     }
 
     @DeleteMapping("/{catId}")

@@ -44,7 +44,7 @@ services:
     volumes:
       - main-db:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=main_db
+      - POSTGRES_DB=main-db
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
 
