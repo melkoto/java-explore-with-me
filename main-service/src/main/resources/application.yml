@@ -27,4 +27,4 @@ logging:
           nodeValue: INFO
 
 server:
-  port: 9090
+  port: 8080
