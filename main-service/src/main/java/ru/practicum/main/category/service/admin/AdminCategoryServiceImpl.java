@@ -7,6 +7,7 @@ import ru.practicum.main.category.model.Category;
 import ru.practicum.main.category.repository.AdminCategoryRepository;
 import ru.practicum.main.error.ConflictException;
 import ru.practicum.main.error.NotFoundException;
+import ru.practicum.main.event.repository.EventRepository;
 
 import static ru.practicum.main.category.mapper.CategoryMapper.mapCategoryDtoToCategory;
 import static ru.practicum.main.category.mapper.CategoryMapper.mapCategoryToCategoryResponseDto;
@@ -14,9 +15,11 @@ import static ru.practicum.main.category.mapper.CategoryMapper.mapCategoryToCate
 @Service
 public class AdminCategoryServiceImpl implements AdminCategoryService {
     private final AdminCategoryRepository adminCategoryRepository;
+    private final EventRepository eventRepository;
 
-    public AdminCategoryServiceImpl(AdminCategoryRepository adminCategoryRepository) {
+    public AdminCategoryServiceImpl(AdminCategoryRepository adminCategoryRepository, EventRepository eventRepository) {
         this.adminCategoryRepository = adminCategoryRepository;
+        this.eventRepository = eventRepository;
     }
 
     @Override
@@ -31,15 +34,20 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
 
     @Override
     public void deleteCategory(int catId) {
-        if (!checkIfExist(catId)) {
+        if (checkIfNotExist(catId)) {
             throw new NotFoundException("Category with id: " + catId + " doesn't exist");
         }
+
+        if (!eventRepository.findByCategoryId(catId).isEmpty()) {
+            throw new ConflictException("Category with id: " + catId + " has events");
+        }
+
         adminCategoryRepository.deleteById(catId);
     }
 
     @Override
     public CategoryResponseDto updateCategory(CategoryDto categoryDto, int catId) {
-        if (!checkIfExist(catId)) {
+        if (checkIfNotExist(catId)) {
             throw new NotFoundException("Category with id: " + catId + " doesn't exist");
         }
 
@@ -51,7 +59,7 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
         return mapCategoryToCategoryResponseDto(category);
     }
 
-    private boolean checkIfExist(int catId) {
-        return adminCategoryRepository.existsById(catId);
+    private boolean checkIfNotExist(int catId) {
+        return !adminCategoryRepository.existsById(catId);
     }
 }
