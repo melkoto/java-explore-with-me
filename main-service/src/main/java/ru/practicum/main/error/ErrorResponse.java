@@ -1,5 +1,8 @@
 package ru.practicum.main.error;
 
+import lombok.Getter;
+
+@Getter
 public class ErrorResponse {
     private int statusCode;
     private String error;
@@ -12,16 +15,8 @@ public class ErrorResponse {
         this.error = message;
     }
 
-    public int getStatusCode() {
-        return statusCode;
-    }
-
     public void setStatusCode(int statusCode) {
         this.statusCode = statusCode;
-    }
-
-    public String getError() {
-        return error;
     }
 
     public void setError(String message) {

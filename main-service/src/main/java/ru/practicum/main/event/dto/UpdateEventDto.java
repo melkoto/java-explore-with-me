@@ -2,8 +2,8 @@ package ru.practicum.main.event.dto;
 
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
-import ru.practicum.main.event.model.Location;
 import ru.practicum.main.event.EventEnums.StateAction;
+import ru.practicum.main.event.model.Location;
 
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;

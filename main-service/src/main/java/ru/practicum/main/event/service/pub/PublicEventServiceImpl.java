@@ -9,14 +9,12 @@ import ru.practicum.main.event.repository.EventRepository;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class PublicEventServiceImpl implements PublicEventService {
+    private static final String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
     private final StatsClient statsClient;
     private final EventRepository eventRepository;
-
-    private static final String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
 
     public PublicEventServiceImpl(StatsClient statsClient, EventRepository eventRepository) {
         this.statsClient = statsClient;
