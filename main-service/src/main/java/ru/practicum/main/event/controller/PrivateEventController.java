@@ -7,9 +7,9 @@ import ru.practicum.main.event.dto.CreateEventDto;
 import ru.practicum.main.event.dto.FullEventResponseDto;
 import ru.practicum.main.event.dto.ShortEventResponseDto;
 import ru.practicum.main.event.dto.UpdateEventUserRequestDto;
-import ru.practicum.main.user.dto.UpdateEventDto;
-import ru.practicum.main.user.dto.UpdateEventRequestDto;
-import ru.practicum.main.user.dto.UserResponseDto;
+import ru.practicum.main.request.dto.EventRequestStatusUpdateRequestDto;
+import ru.practicum.main.request.dto.EventRequestStatusUpdateResponseDto;
+import ru.practicum.main.request.dto.ParticipationRequestDto;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -44,22 +44,24 @@ public class PrivateEventController {
 
     @PatchMapping("/{eventId}")
     public ResponseEntity<FullEventResponseDto> updateEvent(@Valid @RequestBody UpdateEventUserRequestDto updateEventUserRequestDto,
-                                       @PathVariable("userId") Long userId,
-                                       @PathVariable("eventId") Long eventId) {
+                                                            @PathVariable("userId") Long userId,
+                                                            @PathVariable("eventId") Long eventId) {
         log.info("Update event with id: {} for user with id: {} with body: {}", eventId, userId, updateEventUserRequestDto);
         return ResponseEntity.status(200).body(null);
     }
 
     @GetMapping("{eventId}/requests")
-    public UserResponseDto getEventRequest(@PathVariable("userId") Long userId, @PathVariable("eventId") Long eventId) {
+    public ResponseEntity<ParticipationRequestDto> getEventRequest(@PathVariable("userId") Long userId,
+                                                                   @PathVariable("eventId") Long eventId) {
         log.info("Get event request with id: {} for user with id: {}", eventId, userId);
-        return null;
+        return ResponseEntity.status(200).body(null);
     }
 
     @PatchMapping("{eventId}/requests")
-    public UserResponseDto updateEventRequest(@Valid @RequestBody UpdateEventRequestDto updateEventRequestDto,
-                                              @PathVariable("userId") Long userId,
-                                              @PathVariable("eventId") Long eventId) {
-        return null;
+    public ResponseEntity<EventRequestStatusUpdateResponseDto> updateEventRequest(@Valid @RequestBody EventRequestStatusUpdateRequestDto dto,
+                                                                                  @PathVariable("userId") Long userId,
+                                                                                  @PathVariable("eventId") Long eventId) {
+        log.info("Update event request with id: {} for user with id: {} with body: {}", eventId, userId, dto);
+        return ResponseEntity.status(200).body(null);
     }
 }

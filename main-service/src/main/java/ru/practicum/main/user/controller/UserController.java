@@ -1,14 +1,8 @@
 package ru.practicum.main.user.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
-import ru.practicum.main.user.dto.CreateUserDto;
-import ru.practicum.main.user.dto.UpdateEventDto;
-import ru.practicum.main.user.dto.UpdateEventRequestDto;
-import ru.practicum.main.user.dto.UserResponseDto;
-
-import javax.validation.Valid;
-import java.util.List;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/users/{userId}/events")

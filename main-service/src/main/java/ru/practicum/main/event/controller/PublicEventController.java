@@ -30,7 +30,7 @@ public class PublicEventController {
                                                                  @Positive @RequestParam(defaultValue = "10") int size,
                                                                  HttpServletRequest request) {
         log.info("Get events with \ntext: {}, \ncategories: {}, \npaid: {}, \nrangeStart: {}, \nrangeEnd: {}, " +
-                "\nonlyAvailable: {}, \nsort: {}, \nfrom: {}, \nsize: {}", text, categoriesId, paid, rangeStart, rangeEnd,
+                        "\nonlyAvailable: {}, \nsort: {}, \nfrom: {}, \nsize: {}", text, categoriesId, paid, rangeStart, rangeEnd,
                 onlyAvailable, sort, from, size);
         return ResponseEntity.status(200).body(null);
     }

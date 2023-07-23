@@ -2,10 +2,10 @@ package ru.practicum.main.category.service.publical;
 
 import org.springframework.stereotype.Service;
 import ru.practicum.main.category.dto.CategoryResponseDto;
+import ru.practicum.main.category.mapper.CategoryMapper;
 import ru.practicum.main.category.model.Category;
 import ru.practicum.main.category.repository.PublicCategoryRepository;
 import ru.practicum.main.error.NotFoundException;
-import ru.practicum.main.category.mapper.CategoryMapper;
 
 import java.util.List;
 import java.util.stream.Collectors;
