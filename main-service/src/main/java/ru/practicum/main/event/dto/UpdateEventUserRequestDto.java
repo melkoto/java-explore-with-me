@@ -3,7 +3,7 @@ package ru.practicum.main.event.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import ru.practicum.main.event.model.Location;
-import ru.practicum.main.event.model.StateAction;
+import ru.practicum.main.event.EventEnums.StateAction;
 
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;

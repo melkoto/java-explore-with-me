@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 
 @Data
 public class ShortEventResponseDto {
+    private Long id;
+
     private String annotation;
 
     private CategoryResponseDto category;
@@ -17,8 +19,6 @@ public class ShortEventResponseDto {
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;
-
-    private Long id;
 
     private UserResponseDto initiator;
 
