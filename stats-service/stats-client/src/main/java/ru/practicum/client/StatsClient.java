@@ -23,8 +23,10 @@ import java.util.stream.Collectors;
 public class StatsClient extends BaseClient {
 
     @Autowired
-    public StatsClient(@Value("${stats-server.url}") String serverUrl, RestTemplateBuilder builder) {
-        super(builder.uriTemplateHandler(new DefaultUriBuilderFactory(serverUrl)).build());
+    public StatsClient(@Value("http://localhost:9090") String serverUrl, RestTemplateBuilder builder) {
+        super(builder
+                .uriTemplateHandler(new DefaultUriBuilderFactory(serverUrl))
+                .build());
     }
 
     public ResponseEntity<Object> save(String app, String uri, String ip, LocalDateTime time) {

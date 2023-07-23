@@ -6,6 +6,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.main.event.dto.FullEventResponseDto;
 import ru.practicum.main.event.dto.ShortEventResponseDto;
+import ru.practicum.main.event.service.pub.PublicEventService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.Positive;
@@ -17,6 +18,11 @@ import java.util.List;
 @Slf4j
 @Validated
 public class PublicEventController {
+    private final PublicEventService publicEventService;
+
+    public PublicEventController(PublicEventService publicEventService) {
+        this.publicEventService = publicEventService;
+    }
 
     @GetMapping
     public ResponseEntity<List<ShortEventResponseDto>> getEvents(@RequestParam(required = false) String text,
@@ -32,7 +38,8 @@ public class PublicEventController {
         log.info("Get events with \ntext: {}, \ncategories: {}, \npaid: {}, \nrangeStart: {}, \nrangeEnd: {}, " +
                         "\nonlyAvailable: {}, \nsort: {}, \nfrom: {}, \nsize: {}", text, categoriesId, paid, rangeStart, rangeEnd,
                 onlyAvailable, sort, from, size);
-        return ResponseEntity.status(200).body(null);
+        return ResponseEntity.status(200).body(publicEventService.getEvents(text, categoriesId, paid, rangeStart, rangeEnd,
+                onlyAvailable, sort, from, size));
     }
 
     @GetMapping("/{id}")

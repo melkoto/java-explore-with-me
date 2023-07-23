@@ -5,6 +5,7 @@ import lombok.Data;
 import ru.practicum.main.event.model.Location;
 
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PositiveOrZero;
 import javax.validation.constraints.Size;
 
@@ -25,7 +26,7 @@ public class CreateEventDto {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private String eventDate;
 
-    @NotEmpty
+    @NotNull
     private Location location;
 
     @NotEmpty

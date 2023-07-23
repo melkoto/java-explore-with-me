@@ -1,5 +1,6 @@
 package ru.practicum.main.category.service.admin;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.main.category.dto.CategoryDto;
 import ru.practicum.main.category.dto.CategoryResponseDto;
@@ -13,6 +14,7 @@ import static ru.practicum.main.category.mapper.CategoryMapper.mapCategoryDtoToC
 import static ru.practicum.main.category.mapper.CategoryMapper.mapCategoryToCategoryResponseDto;
 
 @Service
+@Slf4j
 public class AdminCategoryServiceImpl implements AdminCategoryService {
     private final AdminCategoryRepository adminCategoryRepository;
     private final EventRepository eventRepository;
@@ -29,6 +31,9 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
         }
 
         Category category = adminCategoryRepository.save(mapCategoryDtoToCategory(categoryDto));
+
+        log.info("Category: {}, with name: {} was added", category, categoryDto.getName());
+
         return mapCategoryToCategoryResponseDto(category);
     }
 
@@ -43,6 +48,8 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
         }
 
         adminCategoryRepository.deleteById(catId);
+
+        log.info("Category with id: {} was deleted", catId);
     }
 
     @Override
@@ -56,6 +63,9 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
         }
 
         Category category = adminCategoryRepository.save(mapCategoryDtoToCategory(categoryDto));
+
+        log.info("Category: {}, with id: {} was updated", category, catId);
+
         return mapCategoryToCategoryResponseDto(category);
     }
 

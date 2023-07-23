@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.main.category.dto.CategoryResponseDto;
-import ru.practicum.main.category.service.publical.PublicCategoryService;
+import ru.practicum.main.category.service.pub.PublicCategoryService;
 
 import java.util.List;
 

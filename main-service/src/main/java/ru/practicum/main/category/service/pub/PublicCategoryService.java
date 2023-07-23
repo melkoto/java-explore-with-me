@@ -1,4 +1,4 @@
-package ru.practicum.main.category.service.publical;
+package ru.practicum.main.category.service.pub;
 
 import org.springframework.stereotype.Repository;
 import ru.practicum.main.category.dto.CategoryResponseDto;
