@@ -3,10 +3,8 @@ package ru.practicum.main.event.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import ru.practicum.main.event.dto.FullEventResponseDto;
 import ru.practicum.main.event.dto.ShortEventResponseDto;
 
 import javax.servlet.http.HttpServletRequest;
@@ -34,6 +32,12 @@ public class PublicEventController {
         log.info("Get events with \ntext: {}, \ncategories: {}, \npaid: {}, \nrangeStart: {}, \nrangeEnd: {}, " +
                 "\nonlyAvailable: {}, \nsort: {}, \nfrom: {}, \nsize: {}", text, categoriesId, paid, rangeStart, rangeEnd,
                 onlyAvailable, sort, from, size);
+        return ResponseEntity.status(200).body(null);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<FullEventResponseDto> getEvent(@PathVariable("id") Long id, HttpServletRequest request) {
+        log.info("Get event with id: {}, request: {}", id, request);
         return ResponseEntity.status(200).body(null);
     }
 }

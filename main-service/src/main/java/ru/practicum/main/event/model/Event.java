@@ -58,7 +58,7 @@ public class Event {
     @Column
     private State state;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String title;
 
     @Column
