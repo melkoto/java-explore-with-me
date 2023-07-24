@@ -26,7 +26,7 @@ public class PublicEventController {
 
     @GetMapping
     public ResponseEntity<List<ShortEventResponseDto>> getEvents(@RequestParam(required = false) String text,
-                                                                 @RequestParam(name = "categories", required = false) List<Long> categoriesId,
+                                                                 @RequestParam(name = "categories", required = false) List<Integer> categoriesId,
                                                                  @RequestParam(required = false) Boolean paid,
                                                                  @RequestParam(required = false) String rangeStart,
                                                                  @RequestParam(required = false) String rangeEnd,
@@ -38,13 +38,13 @@ public class PublicEventController {
         log.info("Get events with \ntext: {}, \ncategories: {}, \npaid: {}, \nrangeStart: {}, \nrangeEnd: {}, " +
                         "\nonlyAvailable: {}, \nsort: {}, \nfrom: {}, \nsize: {}", text, categoriesId, paid, rangeStart, rangeEnd,
                 onlyAvailable, sort, from, size);
-        return ResponseEntity.status(200).body(publicEventService.getEvents(text, categoriesId, paid, rangeStart, rangeEnd,
-                onlyAvailable, sort, from, size));
+        return ResponseEntity.status(200).body(publicEventService.getEvents(text, categoriesId, paid, rangeStart,
+                rangeEnd, onlyAvailable, sort, from, size, request));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<FullEventResponseDto> getEvent(@PathVariable("id") Long id, HttpServletRequest request) {
         log.info("Get event with id: {}, request: {}", id, request);
-        return ResponseEntity.status(200).body(null);
+        return ResponseEntity.status(200).body(publicEventService.getEvent(id.intValue(), request));
     }
 }

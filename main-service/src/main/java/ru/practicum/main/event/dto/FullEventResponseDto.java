@@ -16,7 +16,7 @@ public class FullEventResponseDto {
 
     private CategoryResponseDto category;
 
-    private Integer confirmedRequests;
+    private long confirmedRequests;
 
     private LocalDateTime createdOn;
 
@@ -28,17 +28,17 @@ public class FullEventResponseDto {
 
     private Location location;
 
-    private Boolean paid;
+    private boolean paid;
 
-    private Integer participantLimit;
+    private int participantLimit;
 
     private LocalDateTime publishedOn;
 
-    private Boolean requestModeration;
+    private boolean requestModeration;
 
     private State state;
 
     private String title;
 
-    private Integer views;
+    private long views;
 }

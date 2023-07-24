@@ -24,7 +24,7 @@ public class Event {
     private Category category;
 
     @Column(name = "confirmed_requests")
-    private Integer confirmedRequests;
+    private int confirmedRequests;
 
     @Column(name = "created_on")
     private LocalDateTime createdOn;
@@ -63,6 +63,6 @@ public class Event {
     private String title;
 
     @Column
-    private Integer views;
+    private Long views;
 
 }

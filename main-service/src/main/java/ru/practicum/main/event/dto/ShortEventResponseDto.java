@@ -26,5 +26,5 @@ public class ShortEventResponseDto {
 
     private String title;
 
-    private Long views;
+    private long views;
 }

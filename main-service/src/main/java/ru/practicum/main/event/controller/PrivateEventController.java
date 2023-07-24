@@ -7,6 +7,7 @@ import ru.practicum.main.event.dto.CreateEventDto;
 import ru.practicum.main.event.dto.FullEventResponseDto;
 import ru.practicum.main.event.dto.ShortEventResponseDto;
 import ru.practicum.main.event.dto.UpdateEventUserRequestDto;
+import ru.practicum.main.event.service.priv.PrivateEventService;
 import ru.practicum.main.request.dto.EventRequestStatusUpdateRequestDto;
 import ru.practicum.main.request.dto.EventRequestStatusUpdateResponseDto;
 import ru.practicum.main.request.dto.ParticipationRequestDto;
@@ -18,12 +19,18 @@ import java.util.List;
 @RequestMapping("/users/{userId}/events")
 @Slf4j
 public class PrivateEventController {
+    private final PrivateEventService privateEventService;
+
+    public PrivateEventController(PrivateEventService privateEventService) {
+        this.privateEventService = privateEventService;
+    }
+
     @GetMapping
     public ResponseEntity<List<ShortEventResponseDto>> getEvents(@PathVariable Long userId,
                                                                  @RequestParam(value = "from", defaultValue = "0") Integer from,
                                                                  @RequestParam(value = "size", defaultValue = "10") Integer size) {
         log.info("Get events for user with id: {}, from: {}, size: {}", userId, from, size);
-        return ResponseEntity.status(200).body(null);
+        return ResponseEntity.status(200).body(privateEventService.getEvents(userId, from, size));
     }
 
     @PostMapping
