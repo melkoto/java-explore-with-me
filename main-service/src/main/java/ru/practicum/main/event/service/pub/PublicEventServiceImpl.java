@@ -11,7 +11,7 @@ import ru.practicum.main.event.dto.FullEventResponseDto;
 import ru.practicum.main.event.dto.ShortEventResponseDto;
 import ru.practicum.main.event.mapper.EventMapper;
 import ru.practicum.main.event.model.Event;
-import ru.practicum.main.event.repository.EventRepository;
+import ru.practicum.main.event.repository.PublicEventRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
@@ -24,17 +24,17 @@ import java.util.stream.Collectors;
 public class PublicEventServiceImpl implements PublicEventService {
     private static final String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
     private final StatsClient statsClient;
-    private final EventRepository eventRepository;
+    private final PublicEventRepository publicEventRepository;
 
-    public PublicEventServiceImpl(StatsClient statsClient, EventRepository eventRepository) {
+    public PublicEventServiceImpl(StatsClient statsClient, PublicEventRepository publicEventRepository) {
         this.statsClient = statsClient;
-        this.eventRepository = eventRepository;
+        this.publicEventRepository = publicEventRepository;
     }
 
     public List<ShortEventResponseDto> getEvents(String text, List<Integer> categories, Boolean paid, String rangeStart,
                                                  String rangeEnd, Boolean onlyAvailable, String sort, Integer from,
                                                  Integer size, HttpServletRequest request) {
-        statsClient.save("ewm-main-service", request.getRequestURI(), request.getRemoteAddr(),
+        statsClient.saveHit("ewm-main-service", request.getRequestURI(), request.getRemoteAddr(),
                 LocalDateTime.now());
 
         LocalDateTime start = (rangeStart != null)
@@ -46,7 +46,7 @@ public class PublicEventServiceImpl implements PublicEventService {
 
         Pageable pageable = PageRequest.of(from / size, size, Sort.Direction.valueOf(sort));
 
-        Page<Event> events = eventRepository.findAllEvents(text, categories, paid, start, end, pageable);
+        Page<Event> events = publicEventRepository.findAllEvents(text, categories, paid, start, end, pageable);
 
         log.info("events: {}", events);
 
@@ -56,13 +56,13 @@ public class PublicEventServiceImpl implements PublicEventService {
     }
 
     public FullEventResponseDto getEvent(long id, HttpServletRequest request) {
-        statsClient.save("ewm-main-service", request.getRequestURI(), request.getRemoteAddr(),
+        statsClient.saveHit("ewm-main-service", request.getRequestURI(), request.getRemoteAddr(),
                 LocalDateTime.now());
 
-        Event event = eventRepository.findById(id).orElseThrow();
+        Event event = publicEventRepository.findById(id).orElseThrow();
 
         log.info("event: {}", event);
 
-        return EventMapper.toEventFullDto(event, event.getConfirmedRequests(), event.getViews());
+        return EventMapper.toEventFullDto(event, event.getViews(), event.getConfirmedRequests());
     }
 }

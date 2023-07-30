@@ -34,19 +34,17 @@ public class PrivateEventController {
     }
 
     @PostMapping
-    public ResponseEntity<List<FullEventResponseDto>> addEvent(@Valid @RequestBody CreateEventDto createEventDto,
-                                                               @PathVariable Long userId,
-                                                               @RequestParam(value = "from", defaultValue = "0") Integer from,
-                                                               @RequestParam(value = "size", defaultValue = "10") Integer size) {
-        log.info("Add event for user with body: {}, id: {}, from: {}, size: {}", createEventDto, userId, from, size);
-        return ResponseEntity.status(200).body(null);
+    public ResponseEntity<FullEventResponseDto> addEvent(@Valid @RequestBody CreateEventDto createEventDto,
+                                                         @PathVariable Long userId) {
+        log.info("Add event for user with body: {} and user with id: {}", createEventDto, userId);
+        return ResponseEntity.status(201).body(privateEventService.addEvent(createEventDto, userId));
     }
 
     @GetMapping("/{eventId}")
     public ResponseEntity<FullEventResponseDto> getEvent(@PathVariable("userId") Long userId,
                                                          @PathVariable("eventId") Long eventId) {
         log.info("Get event with id: {} for user with id: {}", eventId, userId);
-        return ResponseEntity.status(200).body(null);
+        return ResponseEntity.status(200).body(privateEventService.getEvent(userId, eventId));
     }
 
     @PatchMapping("/{eventId}")
@@ -54,9 +52,10 @@ public class PrivateEventController {
                                                             @PathVariable("userId") Long userId,
                                                             @PathVariable("eventId") Long eventId) {
         log.info("Update event with id: {} for user with id: {} with body: {}", eventId, userId, updateEventUserRequestDto);
-        return ResponseEntity.status(200).body(null);
+        return ResponseEntity.status(200).body(privateEventService.updateEvent(updateEventUserRequestDto, userId, eventId));
     }
 
+    // TODO add when requests ready
     @GetMapping("{eventId}/requests")
     public ResponseEntity<ParticipationRequestDto> getEventRequest(@PathVariable("userId") Long userId,
                                                                    @PathVariable("eventId") Long eventId) {
@@ -64,6 +63,7 @@ public class PrivateEventController {
         return ResponseEntity.status(200).body(null);
     }
 
+    // TODO add when requests ready
     @PatchMapping("{eventId}/requests")
     public ResponseEntity<EventRequestStatusUpdateResponseDto> updateEventRequest(@Valid @RequestBody EventRequestStatusUpdateRequestDto dto,
                                                                                   @PathVariable("userId") Long userId,

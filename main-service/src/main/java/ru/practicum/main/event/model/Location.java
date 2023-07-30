@@ -13,8 +13,8 @@ public class Location {
     private Integer id;
 
     @Column(name = "lat")
-    private float lat;
+    private Double lat;
 
     @Column(name = "lon")
-    private float lon;
+    private Double lon;
 }

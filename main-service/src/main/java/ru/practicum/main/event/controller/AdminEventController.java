@@ -7,6 +7,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.main.event.dto.FullEventResponseDto;
 import ru.practicum.main.event.dto.UpdateEventDto;
+import ru.practicum.main.event.service.admin.AdminEventService;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -22,6 +23,12 @@ import java.util.List;
 public class AdminEventController {
     private static final String DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
+    private final AdminEventService adminEventService;
+
+    public AdminEventController(AdminEventService adminEventService) {
+        this.adminEventService = adminEventService;
+    }
+
     @GetMapping
     public ResponseEntity<List<FullEventResponseDto>> getEvents(@RequestParam(name = "users", required = false) List<Long> users,
                                                                 @RequestParam(name = "states", required = false) List<String> states,
@@ -32,13 +39,13 @@ public class AdminEventController {
                                                                 @Positive @RequestParam(name = "size", defaultValue = "10") Integer size) {
         log.info("Get events with \nusers: {}, \nstates: {}, \ncategories: {}, \nrangeStart: {}, \nrangeEnd: {}, " +
                 "\nfrom: {}, \nsize: {}", users, states, categories, rangeStart, rangeEnd, from, size);
-        return ResponseEntity.status(200).body(null);
+        return ResponseEntity.status(200).body(adminEventService.getEvents(users, states, categories, rangeStart, rangeEnd, from, size));
     }
 
     @PatchMapping("/{eventId}")
     public ResponseEntity<FullEventResponseDto> updateEvent(@PathVariable @NotNull Long eventId,
                                                             @Valid @RequestBody UpdateEventDto event) {
         log.info("Update event with \nid: {} and \ndata: {}", eventId, event);
-        return ResponseEntity.status(200).body(null);
+        return ResponseEntity.status(200).body(adminEventService.updateEvent(eventId, event));
     }
 }

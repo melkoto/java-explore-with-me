@@ -8,7 +8,7 @@ import ru.practicum.main.category.model.Category;
 import ru.practicum.main.category.repository.AdminCategoryRepository;
 import ru.practicum.main.error.ConflictException;
 import ru.practicum.main.error.NotFoundException;
-import ru.practicum.main.event.repository.EventRepository;
+import ru.practicum.main.event.repository.PublicEventRepository;
 
 import static ru.practicum.main.category.mapper.CategoryMapper.mapCategoryDtoToCategory;
 import static ru.practicum.main.category.mapper.CategoryMapper.mapCategoryToCategoryResponseDto;
@@ -17,11 +17,11 @@ import static ru.practicum.main.category.mapper.CategoryMapper.mapCategoryToCate
 @Slf4j
 public class AdminCategoryServiceImpl implements AdminCategoryService {
     private final AdminCategoryRepository adminCategoryRepository;
-    private final EventRepository eventRepository;
+    private final PublicEventRepository publicEventRepository;
 
-    public AdminCategoryServiceImpl(AdminCategoryRepository adminCategoryRepository, EventRepository eventRepository) {
+    public AdminCategoryServiceImpl(AdminCategoryRepository adminCategoryRepository, PublicEventRepository publicEventRepository) {
         this.adminCategoryRepository = adminCategoryRepository;
-        this.eventRepository = eventRepository;
+        this.publicEventRepository = publicEventRepository;
     }
 
     @Override
@@ -43,7 +43,7 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
             throw new NotFoundException("Category with id: " + catId + " doesn't exist");
         }
 
-        if (!eventRepository.findByCategoryId(catId).isEmpty()) {
+        if (!publicEventRepository.findByCategoryId(catId).isEmpty()) {
             throw new ConflictException("Category with id: " + catId + " has events");
         }
 

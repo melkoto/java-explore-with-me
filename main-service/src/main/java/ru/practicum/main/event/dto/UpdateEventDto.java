@@ -2,8 +2,7 @@ package ru.practicum.main.event.dto;
 
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
-import ru.practicum.main.event.EventEnums.StateAction;
-import ru.practicum.main.event.model.Location;
+import ru.practicum.main.event.eventEnums.StateAction;
 
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
@@ -21,7 +20,7 @@ public class UpdateEventDto {
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;
 
-    private Location location;
+    private LocationDto location;
 
     private Boolean paid;
 

@@ -29,12 +29,12 @@ public class StatsClient extends BaseClient {
                 .build());
     }
 
-    public ResponseEntity<Object> save(String app, String uri, String ip, LocalDateTime time) {
+    public ResponseEntity<Object> saveHit(String app, String uri, String ip, LocalDateTime time) {
         log.info("Saving hit for app: {}, uri: {}, ip: {}, time: {}", app, uri, ip, time);
         return post("/hit", new RequestDto(app, uri, ip, getFormattedTime(time)));
     }
 
-    public ResponseEntity<Object> get(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
+    public ResponseEntity<Object> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
         log.info("Getting stats for start: {}, end: {}, uris: {}, unique: {}", start, end, uris, unique);
 
         validateTimespan(start, end);
@@ -44,11 +44,20 @@ public class StatsClient extends BaseClient {
         return get(endpoint, parameters);
     }
 
+    public ResponseEntity<Object> getAllStats(List<String> uris) {
+        String urisString = "";
+        if (!(uris == null) && !uris.isEmpty()) {
+            urisString = "&uris=" + String.join("&uris=", uris);
+        }
+
+        return get("/stats/hits?" + urisString, null);
+    }
+
     private void validateTimespan(LocalDateTime start, LocalDateTime end) {
-        log.info("Validating timespan for start: {}, end: {}", start, end);
+        log.info("Validating time for start: {}, end: {}", start, end);
 
         if (start == null || end == null || start.isAfter(end)) {
-            throw new IllegalArgumentException("Invalid timespan: start: " + start + ", end: " + end);
+            throw new IllegalArgumentException("Invalid time: start: " + start + ", end: " + end);
         }
     }
 

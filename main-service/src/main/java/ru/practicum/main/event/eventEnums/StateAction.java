@@ -1,4 +1,4 @@
-package ru.practicum.main.event.EventEnums;
+package ru.practicum.main.event.eventEnums;
 
 public enum StateAction {
     REJECT_EVENT,

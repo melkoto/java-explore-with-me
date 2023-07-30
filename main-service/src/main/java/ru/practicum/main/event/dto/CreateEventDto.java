@@ -2,12 +2,13 @@ package ru.practicum.main.event.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
-import ru.practicum.main.event.model.Location;
+import ru.practicum.main.category.model.Category;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PositiveOrZero;
 import javax.validation.constraints.Size;
+import java.time.LocalDateTime;
 
 @Data
 public class CreateEventDto {
@@ -16,7 +17,7 @@ public class CreateEventDto {
     private String annotation;
 
     @NotEmpty
-    private int category;
+    private Category category;
 
     @NotEmpty
     @Size(min = 20, max = 7000, message = "Description must be between 20 and 7000 characters")
@@ -24,10 +25,10 @@ public class CreateEventDto {
 
     @NotEmpty
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private String eventDate;
+    private LocalDateTime eventDate;
 
     @NotNull
-    private Location location;
+    private LocationDto location;
 
     @NotEmpty
     @Size(min = 3, max = 120, message = "Title must be between 3 and 120 characters")

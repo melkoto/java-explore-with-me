@@ -1,0 +1,14 @@
+package ru.practicum.main.event.service.admin;
+
+import ru.practicum.main.event.dto.FullEventResponseDto;
+import ru.practicum.main.event.dto.UpdateEventDto;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+public interface AdminEventService {
+    List<FullEventResponseDto> getEvents(List<Long> users, List<String> states, List<Integer> categories,
+                                         LocalDateTime rangeStart, LocalDateTime rangeEnd, Integer from, Integer size);
+
+    FullEventResponseDto updateEvent(Long eventId, UpdateEventDto event);
+}
