@@ -8,9 +8,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.client.StatsClient;
 import ru.practicum.main.category.repository.AdminCategoryRepository;
+import ru.practicum.main.error.NotFoundException;
 import ru.practicum.main.event.dto.FullEventResponseDto;
 import ru.practicum.main.event.dto.ShortEventResponseDto;
 import ru.practicum.main.event.eventEnums.SortTypes;
+import ru.practicum.main.event.eventEnums.State;
 import ru.practicum.main.event.mapper.EventMapper;
 import ru.practicum.main.event.model.Event;
 import ru.practicum.main.event.repository.PublicEventRepository;
@@ -20,6 +22,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static ru.practicum.main.event.eventEnums.State.PUBLISHED;
 
 @Service
 @Slf4j
@@ -76,11 +80,15 @@ public class PublicEventServiceImpl implements PublicEventService {
                 .collect(Collectors.toList());
     }
 
-    public FullEventResponseDto getEvent(long id, HttpServletRequest request) {
+    public FullEventResponseDto getEvent(long eventId, HttpServletRequest request) {
         statsClient.saveHit("ewm-main-service", request.getRequestURI(), request.getRemoteAddr(),
                 LocalDateTime.now());
 
-        Event event = publicEventRepository.findById(id).orElseThrow();
+        Event event = publicEventRepository.findById(eventId).orElseThrow();
+
+        if (event.getState() != PUBLISHED) {
+            throw new NotFoundException("There is no published event with id: " + eventId);
+        }
 
         log.info("event: {}", event);
 

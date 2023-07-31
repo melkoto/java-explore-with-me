@@ -43,8 +43,6 @@ public class EventMapper {
                                                                     Location location) {
         if (updateDto.getAnnotation() != null) {
             event.setAnnotation(updateDto.getAnnotation());
-        } else {
-            event.setAnnotation(event.getAnnotation());
         }
 
         if (updateDto.getEventDate() != null) {
@@ -67,7 +65,10 @@ public class EventMapper {
             event.setRequestModeration(updateDto.getRequestModeration());
         }
 
-        event.setDescription(updateDto.getDescription());
+        if (updateDto.getDescription() != null) {
+            event.setDescription(updateDto.getDescription());
+        }
+
         event.setLocation(location);
 
         return event;
