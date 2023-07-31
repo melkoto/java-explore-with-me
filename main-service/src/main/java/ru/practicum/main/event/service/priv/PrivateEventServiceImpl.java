@@ -53,9 +53,25 @@ public class PrivateEventServiceImpl implements PrivateEventService {
         // TODO add confirmed requests and views
         List<ShortEventResponseDto> events = eventRepository.findAllByInitiatorId(userId, PageRequest.of(from, size))
                 .stream()
-                .map(event -> toEventShortDto(event, null, 0))
+                .map(event -> toEventShortDto(event, null, 0L))
                 .collect(Collectors.toList());
-        return eventViews(events);
+
+        List<String> listOfUris = events.stream()
+                .map(ShortEventResponseDto::getId)
+                .map(Object::toString)
+                .map(s -> "/events/" + s)
+                .collect(Collectors.toList());
+
+        Object bodyWithViews = statsClient.getAllStats(listOfUris).getBody();
+
+        return events.stream()
+                .peek(event -> {
+                    if (bodyWithViews instanceof LinkedHashMap) {
+                        event.setViews(Long.parseLong(((LinkedHashMap<?, ?>) bodyWithViews).get(event.getId()
+                                .toString()).toString()));
+                    }
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -73,8 +89,10 @@ public class PrivateEventServiceImpl implements PrivateEventService {
                 .findById(userId)
                 .orElseThrow(() -> new NotFoundException("User with id " + userId + " not found"));
 
-        return eventViews(List.of(toEventFullDto(eventRepository.save(
-                createDtoToEvent(createEventDto, saveLocation(createEventDto.getLocation()), user)), 0L, 0))).get(0);
+        return toEventFullDto(eventRepository
+                .save(createDtoToEvent(
+                        createEventDto, saveLocation(
+                                createEventDto.getLocation()), user)), 0L, 0);
     }
 
     @Override
@@ -83,8 +101,8 @@ public class PrivateEventServiceImpl implements PrivateEventService {
             throw new NotFoundException("User with id " + userId + " not found");
         }
 
-        return eventViews(List.of(toEventDto(
-                eventRepository.findByIdAndInitiatorId(eventId, userId).orElseThrow()))).get(0);
+        return toEventDto(
+                eventRepository.findByIdAndInitiatorId(eventId, userId).orElseThrow());
     }
 
     @Override
@@ -106,31 +124,13 @@ public class PrivateEventServiceImpl implements PrivateEventService {
             throw new ConflictException("The event date and time should not be less than two hours from the current moment");
         }
 
-        return eventViews(List.of(toEventDto(eventRepository.save(
+        return toEventDto(eventRepository.save(
                 updateDtoToEvent(updateEventUserRequestDto, event,
                         saveLocation(updateEventUserRequestDto.getLocation() == null
                                 ? locationToDto(event.getLocation())
-                                : updateEventUserRequestDto.getLocation())))))).get(0);
+                                : updateEventUserRequestDto.getLocation()))));
     }
 
-    private <T extends ShortEventResponseDto> List<T> eventViews(List<T> events) {
-        List<String> listOfUris = events.stream()
-                .map(T::getId)
-                .map(Object::toString)
-                .map(s -> "/events/" + s)
-                .collect(Collectors.toList());
-
-        Object bodyWithViews = statsClient.getAllStats(listOfUris).getBody();
-
-        return events.stream()
-                .peek(event -> {
-                    if (bodyWithViews instanceof LinkedHashMap) {
-                        event.setViews(Long.parseLong(((LinkedHashMap<?, ?>) bodyWithViews).get(event.getId()
-                                .toString()).toString()));
-                    }
-                })
-                .collect(Collectors.toList());
-    }
 
     private Location saveLocation(LocationDto locationDto) {
         if (!locationRepository.existsByLatAndLon(locationDto.getLat(), locationDto.getLon())) {

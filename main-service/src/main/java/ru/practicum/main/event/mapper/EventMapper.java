@@ -144,7 +144,7 @@ public class EventMapper {
         return event;
     }
 
-    public static ShortEventResponseDto toEventShortDto(Event event, Integer confirmedRequests, long views) {
+    public static ShortEventResponseDto toEventShortDto(Event event, Integer confirmedRequests, Long views) {
         ShortEventResponseDto shortEventResponseDto = new ShortEventResponseDto();
         shortEventResponseDto.setId(event.getId());
         shortEventResponseDto.setTitle(event.getTitle());
