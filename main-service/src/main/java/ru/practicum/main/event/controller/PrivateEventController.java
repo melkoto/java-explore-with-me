@@ -71,10 +71,9 @@ public class PrivateEventController {
                                                                    @PathVariable("eventId") Long eventId) {
         log.info("\nGet event request with id: {}" +
                 "\nfor user with id: {}", eventId, userId);
-        return ResponseEntity.status(200).body(null);
+        return ResponseEntity.status(200).body(privateEventService.getEventRequest(userId, eventId));
     }
 
-    // TODO add when requests ready
     @PatchMapping("{eventId}/requests")
     public ResponseEntity<EventRequestStatusUpdateResponseDto> updateEventRequest(@Valid @RequestBody EventRequestStatusUpdateRequestDto dto,
                                                                                   @PathVariable("userId") Long userId,
@@ -84,6 +83,6 @@ public class PrivateEventController {
                 "\nfor user with id: {}" +
                 "\nwith body: {}" +
                 "\nuri: {}", eventId, userId, dto, request.getRequestURI());
-        return ResponseEntity.status(200).body(null);
+        return ResponseEntity.status(200).body(privateEventService.updateEventRequest(dto, userId, eventId));
     }
 }

@@ -12,7 +12,6 @@ import ru.practicum.main.error.NotFoundException;
 import ru.practicum.main.event.dto.FullEventResponseDto;
 import ru.practicum.main.event.dto.ShortEventResponseDto;
 import ru.practicum.main.event.eventEnums.SortTypes;
-import ru.practicum.main.event.eventEnums.State;
 import ru.practicum.main.event.mapper.EventMapper;
 import ru.practicum.main.event.model.Event;
 import ru.practicum.main.event.repository.PublicEventRepository;

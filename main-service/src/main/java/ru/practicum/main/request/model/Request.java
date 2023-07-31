@@ -1,10 +1,8 @@
 package ru.practicum.main.request.model;
 
 import lombok.Data;
-import ru.practicum.main.event.dto.ShortEventResponseDto;
 import ru.practicum.main.event.eventEnums.State;
 import ru.practicum.main.event.model.Event;
-import ru.practicum.main.user.dto.UserResponseDto;
 import ru.practicum.main.user.model.User;
 
 import javax.persistence.*;

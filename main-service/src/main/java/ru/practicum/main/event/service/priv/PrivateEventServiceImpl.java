@@ -12,6 +12,12 @@ import ru.practicum.main.event.model.Event;
 import ru.practicum.main.event.model.Location;
 import ru.practicum.main.event.repository.LocationRepository;
 import ru.practicum.main.event.repository.PrivateEventRepository;
+import ru.practicum.main.request.dto.EventRequestStatusUpdateRequestDto;
+import ru.practicum.main.request.dto.EventRequestStatusUpdateResponseDto;
+import ru.practicum.main.request.dto.ParticipationRequestDto;
+import ru.practicum.main.request.mapper.RequestMapper;
+import ru.practicum.main.request.model.Request;
+import ru.practicum.main.request.repository.PrivateRequestRepository;
 import ru.practicum.main.user.model.User;
 import ru.practicum.main.user.repository.AdminUserRepository;
 
@@ -20,11 +26,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static ru.practicum.main.event.eventEnums.State.CANCELED;
-import static ru.practicum.main.event.eventEnums.State.PENDING;
+import static ru.practicum.main.event.eventEnums.State.*;
 import static ru.practicum.main.event.mapper.EventMapper.*;
 import static ru.practicum.main.event.mapper.LocationMapper.dtoToLocation;
 import static ru.practicum.main.event.mapper.LocationMapper.locationToDto;
+import static ru.practicum.main.request.mapper.RequestMapper.toEventRequestStatusUpdateResult;
 
 @Service
 @Slf4j
@@ -35,13 +41,15 @@ public class PrivateEventServiceImpl implements PrivateEventService {
     private final AdminCategoryRepository categoryRepository;
 
     private final LocationRepository locationRepository;
+    private final PrivateRequestRepository requestRepository;
 
-    public PrivateEventServiceImpl(AdminUserRepository userRepository, PrivateEventRepository eventRepository, StatsClient statsClient, AdminCategoryRepository categoryRepository, LocationRepository locationRepository) {
+    public PrivateEventServiceImpl(AdminUserRepository userRepository, PrivateEventRepository eventRepository, StatsClient statsClient, AdminCategoryRepository categoryRepository, LocationRepository locationRepository, PrivateRequestRepository requestRepository) {
         this.userRepository = userRepository;
         this.eventRepository = eventRepository;
         this.statsClient = statsClient;
         this.categoryRepository = categoryRepository;
         this.locationRepository = locationRepository;
+        this.requestRepository = requestRepository;
     }
 
     @Override
@@ -129,6 +137,59 @@ public class PrivateEventServiceImpl implements PrivateEventService {
                         saveLocation(updateEventUserRequestDto.getLocation() == null
                                 ? locationToDto(event.getLocation())
                                 : updateEventUserRequestDto.getLocation()))));
+    }
+
+    @Override
+    public EventRequestStatusUpdateResponseDto updateEventRequest(
+            EventRequestStatusUpdateRequestDto requestDto, Long userId, Long eventId) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(String.format("User with id = %d not found.", userId)));
+
+        // Check if event exists and retrieve it
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException(String.format("Event with id = %d not found.", eventId)));
+
+        // Retrieve the related requests
+        List<Request> requests = requestRepository.findAllByIdInAndEventId(requestDto.getRequestIds(), eventId);
+
+        for (Request request : requests) {
+            // Skip to next request if the request is already confirmed or event does not require moderation
+            if (request.getStatus().equals(PUBLISHED) ||
+                    !(event.getParticipantLimit() > 0 || event.getRequestModeration())) continue;
+
+            // Update request status based on the new request
+            if (requestDto.getStatus().equals(REJECTED) || requestDto.getStatus().equals(PUBLISHED)) {
+                request.setStatus(requestDto.getStatus());
+            }
+
+            // Persist changes
+            requestRepository.save(request);
+        }
+
+        // Filter requests by status
+        List<ParticipationRequestDto> confirmed = requests
+                .stream()
+                .filter(request -> request.getStatus().equals(PUBLISHED))
+                .map(RequestMapper::toParticipationRequestDto)
+                .collect(Collectors.toList());
+
+        List<ParticipationRequestDto> rejected = requests
+                .stream()
+                .filter(request -> request.getStatus().equals(REJECTED))
+                .map(RequestMapper::toParticipationRequestDto)
+                .collect(Collectors.toList());
+
+        // Log information
+        log.info("Event request status updated. Event id = {}, user id = {}, status = {}",
+                eventId, userId, requestDto.getStatus());
+
+        return toEventRequestStatusUpdateResult(confirmed, rejected);
+
+    }
+
+    @Override
+    public ParticipationRequestDto getEventRequest(Long userId, Long eventId) {
+        return null;
     }
 
 

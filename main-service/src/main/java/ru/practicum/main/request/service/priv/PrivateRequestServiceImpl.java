@@ -3,11 +3,12 @@ package ru.practicum.main.request.service.priv;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.main.error.BadRequestException;
+import ru.practicum.main.error.ConflictException;
 import ru.practicum.main.error.NotFoundException;
 import ru.practicum.main.event.model.Event;
 import ru.practicum.main.event.repository.PrivateEventRepository;
-import ru.practicum.main.request.mapper.RequestMapper;
 import ru.practicum.main.request.dto.ParticipationRequestDto;
+import ru.practicum.main.request.mapper.RequestMapper;
 import ru.practicum.main.request.model.Request;
 import ru.practicum.main.request.repository.PrivateRequestRepository;
 import ru.practicum.main.user.model.User;
@@ -15,10 +16,10 @@ import ru.practicum.main.user.repository.AdminUserRepository;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static ru.practicum.main.event.eventEnums.State.*;
+import static ru.practicum.main.event.eventEnums.State.CANCELED;
+import static ru.practicum.main.event.eventEnums.State.PUBLISHED;
 import static ru.practicum.main.request.mapper.RequestMapper.toParticipationRequestDto;
 import static ru.practicum.main.request.mapper.RequestMapper.toRequest;
 
@@ -48,10 +49,22 @@ public class PrivateRequestServiceImpl implements PrivateRequestService {
                 .findById(userId)
                 .orElseThrow(() -> new NotFoundException("User with id=" + userId + " was not found"));
 
+
+        Request request = toRequest(user, event);
+
+        log.info("createRequest request = {}", request);
+        log.info("createRequest event = {}", event);
+        log.info("createRequest user = {}", user);
+
+        if (!event.getRequestModeration()) {
+            request.setStatus(PUBLISHED);
+        }
+
         validateEventConstraints(event, userId);
         validateParticipantLimit(event, eventId);
+        validateRepeatRequest(user, event);
 
-        return toParticipationRequestDto(requestRepository.save(toRequest(user, event)));
+        return toParticipationRequestDto(requestRepository.save(request));
     }
 
     @Override
@@ -96,6 +109,16 @@ public class PrivateRequestServiceImpl implements PrivateRequestService {
                     "Event initiator id = " + event.getInitiator().getId());
         }
     }
+
+    private void validateRepeatRequest(User user, Event event) {
+        boolean exists = requestRepository.existsByRequesterAndEvent(user, event);
+
+        if (exists) {
+            throw new ConflictException("User with id=" + user.getId() +
+                    " has already requested participation in event with id=" + event.getId());
+        }
+    }
+
 
     private void validateParticipantLimit(Event event, Long eventId) {
         Integer participantLimit = event.getParticipantLimit();
