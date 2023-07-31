@@ -1,8 +1,10 @@
 package ru.practicum.main.event.service.priv;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.client.StatsClient;
+import ru.practicum.main.category.repository.AdminCategoryRepository;
 import ru.practicum.main.error.ConflictException;
 import ru.practicum.main.error.NotFoundException;
 import ru.practicum.main.event.dto.*;
@@ -10,6 +12,7 @@ import ru.practicum.main.event.model.Event;
 import ru.practicum.main.event.model.Location;
 import ru.practicum.main.event.repository.LocationRepository;
 import ru.practicum.main.event.repository.PrivateEventRepository;
+import ru.practicum.main.user.model.User;
 import ru.practicum.main.user.repository.AdminUserRepository;
 
 import java.time.LocalDateTime;
@@ -18,21 +21,26 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static ru.practicum.main.event.eventEnums.State.CANCELED;
+import static ru.practicum.main.event.eventEnums.State.PENDING;
 import static ru.practicum.main.event.mapper.EventMapper.*;
 import static ru.practicum.main.event.mapper.LocationMapper.dtoToLocation;
+import static ru.practicum.main.event.mapper.LocationMapper.locationToDto;
 
 @Service
+@Slf4j
 public class PrivateEventServiceImpl implements PrivateEventService {
     private final AdminUserRepository userRepository;
     private final PrivateEventRepository eventRepository;
     private final StatsClient statsClient;
+    private final AdminCategoryRepository categoryRepository;
 
     private final LocationRepository locationRepository;
 
-    public PrivateEventServiceImpl(AdminUserRepository userRepository, PrivateEventRepository eventRepository, StatsClient statsClient, LocationRepository locationRepository) {
+    public PrivateEventServiceImpl(AdminUserRepository userRepository, PrivateEventRepository eventRepository, StatsClient statsClient, AdminCategoryRepository categoryRepository, LocationRepository locationRepository) {
         this.userRepository = userRepository;
         this.eventRepository = eventRepository;
         this.statsClient = statsClient;
+        this.categoryRepository = categoryRepository;
         this.locationRepository = locationRepository;
     }
 
@@ -47,7 +55,7 @@ public class PrivateEventServiceImpl implements PrivateEventService {
                 .stream()
                 .map(event -> toEventShortDto(event, null, 0))
                 .collect(Collectors.toList());
-        return fillViewsForList(events);
+        return eventViews(events);
     }
 
     @Override
@@ -60,8 +68,13 @@ public class PrivateEventServiceImpl implements PrivateEventService {
             throw new ConflictException("Дата и время на которые намечено событие не может быть раньше, " +
                     "чем через два часа от текущего момента");
         }
-        return fillViewsForList(List.of(toEventFullDto(eventRepository.save(
-                createDtoToEvent(createEventDto, saveLocation(createEventDto.getLocation()))), 0L, 0))).get(0);
+
+        User user = userRepository
+                .findById(userId)
+                .orElseThrow(() -> new NotFoundException("User with id " + userId + " not found"));
+
+        return eventViews(List.of(toEventFullDto(eventRepository.save(
+                createDtoToEvent(createEventDto, saveLocation(createEventDto.getLocation()), user)), 0L, 0))).get(0);
     }
 
     @Override
@@ -70,7 +83,7 @@ public class PrivateEventServiceImpl implements PrivateEventService {
             throw new NotFoundException("User with id " + userId + " not found");
         }
 
-        return fillViewsForList(List.of(toEventDto(
+        return eventViews(List.of(toEventDto(
                 eventRepository.findByIdAndInitiatorId(eventId, userId).orElseThrow()))).get(0);
     }
 
@@ -80,21 +93,27 @@ public class PrivateEventServiceImpl implements PrivateEventService {
             throw new NotFoundException("User with id " + userId + " not found");
         }
 
-        Event event = eventRepository.findById(eventId).orElseThrow();
-        if (!event.getState().equals(CANCELED) || !event.getRequestModeration()) {
-            throw new ConflictException("Изменить можно только отмененные события " +
-                    "или события в состоянии ожидания модерации");
+        Event event = eventRepository.findById(eventId).orElseThrow(() ->
+                new NotFoundException("Event with id " + eventId + " not found"));
+
+        log.info("Event in private: {}", event);
+
+        if (!event.getState().equals(CANCELED) && !event.getState().equals(PENDING)) {
+            throw new ConflictException("Only cancelled events or events in moderation can be modified");
         }
-        if (updateEventUserRequestDto.getEventDate().minusHours(2).isBefore(LocalDateTime.now())) {
-            throw new ConflictException("Дата и время на которые намечено событие не может быть раньше, " +
-                    "чем через два часа от текущего момента ");
+
+        if (event.getEventDate().minusHours(2).isBefore(LocalDateTime.now())) {
+            throw new ConflictException("The event date and time should not be less than two hours from the current moment");
         }
-        return fillViewsForList(List.of(toEventDto(eventRepository.save(
+
+        return eventViews(List.of(toEventDto(eventRepository.save(
                 updateDtoToEvent(updateEventUserRequestDto, event,
-                        saveLocation(updateEventUserRequestDto.getLocation())))))).get(0);
+                        saveLocation(updateEventUserRequestDto.getLocation() == null
+                                ? locationToDto(event.getLocation())
+                                : updateEventUserRequestDto.getLocation())))))).get(0);
     }
 
-    private <T extends ShortEventResponseDto> List<T> fillViewsForList(List<T> events) {
+    private <T extends ShortEventResponseDto> List<T> eventViews(List<T> events) {
         List<String> listOfUris = events.stream()
                 .map(T::getId)
                 .map(Object::toString)

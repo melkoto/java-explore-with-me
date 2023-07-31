@@ -1,5 +1,6 @@
 package ru.practicum.main.event.service.admin;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.client.StatsClient;
@@ -8,6 +9,7 @@ import ru.practicum.main.event.dto.FullEventResponseDto;
 import ru.practicum.main.event.dto.LocationDto;
 import ru.practicum.main.event.dto.ShortEventResponseDto;
 import ru.practicum.main.event.dto.UpdateEventDto;
+import ru.practicum.main.event.eventEnums.State;
 import ru.practicum.main.event.mapper.EventMapper;
 import ru.practicum.main.event.model.Event;
 import ru.practicum.main.event.model.Location;
@@ -28,6 +30,7 @@ import static ru.practicum.main.event.mapper.EventMapper.updateDtoToEvent;
 import static ru.practicum.main.event.mapper.LocationMapper.dtoToLocation;
 
 @Service
+@Slf4j
 public class AdminEventServiceImpl implements AdminEventService {
     private final StatsClient statsClient;
     private final AdminEventRepository eventRepository;
@@ -39,7 +42,7 @@ public class AdminEventServiceImpl implements AdminEventService {
         this.locationRepository = locationRepository;
     }
 
-    public List<FullEventResponseDto> getEvents(List<Long> users, List<String> states, List<Integer> categories,
+    public List<FullEventResponseDto> getEvents(List<Long> users, List<State> states, List<Integer> categories,
                                                 LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                                 Integer from, Integer size) {
         List<FullEventResponseDto> events = eventRepository.getEventsFiltered(
@@ -48,27 +51,43 @@ public class AdminEventServiceImpl implements AdminEventService {
                 .map(event -> EventMapper.toEventFullDto(event, null, 0))
                 .collect(Collectors.toList());
 
-        return fillViewsForList(events);
+        return eventViews(events);
     }
 
     @Override
     public FullEventResponseDto updateEvent(Long eventId, UpdateEventDto eventDto) {
-        Event eventEnity = eventRepository.findById(eventId).orElseThrow();
-        if (!eventEnity.getPublishedOn().isBefore(eventDto.getEventDate().minusHours(1))) {
+        Event eventEntity = eventRepository.findById(eventId).orElseThrow(() ->
+                new ConflictException("Событие с id " + eventId + " не найдено."));
+
+        log.info("Event entity: {}", eventEntity);
+
+        if (eventDto.getEventDate() != null &&
+                !eventEntity.getPublishedOn().isBefore(eventDto.getEventDate().minusHours(1))) {
             throw new ConflictException("Дата начала изменяемого события должна быть " +
                     "не ранее чем за час от даты публикации.");
         }
-        if (eventDto.getStateAction().equals(PUBLISH_EVENT) && !eventEnity.getState().equals(PENDING)) {
+
+        if (eventDto.getStateAction().equals(PUBLISH_EVENT) && !eventEntity.getState().equals(PENDING)) {
             throw new ConflictException("Событие можно публиковать, только если оно в состоянии ожидания публикации");
         }
-        if (eventDto.getStateAction().equals(REJECT_EVENT) && eventEnity.getState().equals(PUBLISHED)) {
+
+        if (eventDto.getStateAction().equals(REJECT_EVENT) && eventEntity.getState().equals(PUBLISHED)) {
             throw new ConflictException("Событие можно отклонить, только если оно еще не опубликовано");
         }
-        return toEventDto(eventRepository.save(
-                updateDtoToEvent(eventDto, eventEnity, saveLocation(eventDto.getLocation()))));
+
+        FullEventResponseDto fullEventResponseDto = eventViews(List.of(toEventDto(eventRepository.save(
+
+                updateDtoToEvent(eventDto, eventEntity,
+                        eventDto.getLocation() == null
+                                ? eventEntity.getLocation()
+                                : saveLocation(eventDto.getLocation())))))).get(0);
+
+        log.info("Event full response dto after update: {}", fullEventResponseDto);
+
+        return fullEventResponseDto;
     }
 
-    private <T extends ShortEventResponseDto> List<T> fillViewsForList(List<T> events) {
+    private <T extends ShortEventResponseDto> List<T> eventViews(List<T> events) {
         List<String> listOfUris = events.stream()
                 .map(T::getId)
                 .map(Object::toString)

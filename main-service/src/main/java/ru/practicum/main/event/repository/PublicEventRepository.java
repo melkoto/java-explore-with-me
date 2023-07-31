@@ -18,16 +18,32 @@ public interface PublicEventRepository extends JpaRepository<Event, Long> {
     List<Event> findByInitiatorId(long userId, Pageable pageable);
 
     @Query("SELECT e FROM Event e WHERE e.state = 'PUBLISHED' " +
-            "AND LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%')) OR LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%')) " +
-            "AND e.category IN :categories " +
+            "AND (LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%')) OR LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%'))) " +
+            "AND e.category.id IN :categories " +
             "AND e.paid = :paid " +
             "AND e.eventDate BETWEEN :rangeStart AND :rangeEnd " +
             "AND e.eventDate > CURRENT_DATE " +
-            "AND e.confirmedRequests < e.participantLimit")
-    Page<Event> findAllEvents(@Param("text") String text,
-                              @Param("categories") List<Integer> categories,
-                              @Param("paid") Boolean paid,
-                              @Param("rangeStart") LocalDateTime rangeStart,
-                              @Param("rangeEnd") LocalDateTime rangeEnd,
-                              Pageable pageable);
+            "AND e.confirmedRequests < e.participantLimit " +
+            "ORDER BY e.views DESC")
+    Page<Event> findAllEventsOrderByViews(@Param("text") String text,
+                                          @Param("categories") List<Integer> categories,
+                                          @Param("paid") Boolean paid,
+                                          @Param("rangeStart") LocalDateTime rangeStart,
+                                          @Param("rangeEnd") LocalDateTime rangeEnd,
+                                          Pageable pageable);
+
+    @Query("SELECT e FROM Event e WHERE e.state = 'PUBLISHED' " +
+            "AND (LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%')) OR LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%'))) " +
+            "AND e.category.id IN :categories " +
+            "AND e.paid = :paid " +
+            "AND e.eventDate BETWEEN :rangeStart AND :rangeEnd " +
+            "AND e.eventDate > CURRENT_DATE " +
+            "AND e.confirmedRequests < e.participantLimit " +
+            "ORDER BY e.eventDate")
+    Page<Event> findAllEventsOrderByEventDate(@Param("text") String text,
+                                              @Param("categories") List<Integer> categories,
+                                              @Param("paid") Boolean paid,
+                                              @Param("rangeStart") LocalDateTime rangeStart,
+                                              @Param("rangeEnd") LocalDateTime rangeEnd,
+                                              Pageable pageable);
 }

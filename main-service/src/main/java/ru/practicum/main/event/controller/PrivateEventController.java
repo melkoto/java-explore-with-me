@@ -12,10 +12,11 @@ import ru.practicum.main.request.dto.EventRequestStatusUpdateRequestDto;
 import ru.practicum.main.request.dto.EventRequestStatusUpdateResponseDto;
 import ru.practicum.main.request.dto.ParticipationRequestDto;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
 
-@RestController
+@RestControllerAdvice
 @RequestMapping("/users/{userId}/events")
 @Slf4j
 public class PrivateEventController {
@@ -29,29 +30,38 @@ public class PrivateEventController {
     public ResponseEntity<List<ShortEventResponseDto>> getEvents(@PathVariable Long userId,
                                                                  @RequestParam(value = "from", defaultValue = "0") Integer from,
                                                                  @RequestParam(value = "size", defaultValue = "10") Integer size) {
-        log.info("Get events for user with id: {}, from: {}, size: {}", userId, from, size);
+        log.info("\nGet events for user with id: {}," +
+                "\nfrom: {}," +
+                "\nsize: {}", userId, from, size);
         return ResponseEntity.status(200).body(privateEventService.getEvents(userId, from, size));
     }
 
     @PostMapping
     public ResponseEntity<FullEventResponseDto> addEvent(@Valid @RequestBody CreateEventDto createEventDto,
                                                          @PathVariable Long userId) {
-        log.info("Add event for user with body: {} and user with id: {}", createEventDto, userId);
+        log.info("\nAdd event for user with body: {}" +
+                "\nand user with id: {}", createEventDto, userId);
         return ResponseEntity.status(201).body(privateEventService.addEvent(createEventDto, userId));
     }
 
     @GetMapping("/{eventId}")
     public ResponseEntity<FullEventResponseDto> getEvent(@PathVariable("userId") Long userId,
                                                          @PathVariable("eventId") Long eventId) {
-        log.info("Get event with id: {} for user with id: {}", eventId, userId);
+        log.info("\nGet event with id: {}" +
+                "\nfor user with id: {}", eventId, userId);
         return ResponseEntity.status(200).body(privateEventService.getEvent(userId, eventId));
     }
 
     @PatchMapping("/{eventId}")
     public ResponseEntity<FullEventResponseDto> updateEvent(@Valid @RequestBody UpdateEventUserRequestDto updateEventUserRequestDto,
                                                             @PathVariable("userId") Long userId,
-                                                            @PathVariable("eventId") Long eventId) {
-        log.info("Update event with id: {} for user with id: {} with body: {}", eventId, userId, updateEventUserRequestDto);
+                                                            @PathVariable("eventId") Long eventId,
+                                                            HttpServletRequest request) {
+        log.info("\nUpdate event with id: {}" +
+                        "\nwith user id: {}" +
+                        "\nwith body: \n{}," +
+                        "\nuri: {}",
+                eventId, userId, updateEventUserRequestDto, request.getRequestURI());
         return ResponseEntity.status(200).body(privateEventService.updateEvent(updateEventUserRequestDto, userId, eventId));
     }
 
@@ -59,7 +69,8 @@ public class PrivateEventController {
     @GetMapping("{eventId}/requests")
     public ResponseEntity<ParticipationRequestDto> getEventRequest(@PathVariable("userId") Long userId,
                                                                    @PathVariable("eventId") Long eventId) {
-        log.info("Get event request with id: {} for user with id: {}", eventId, userId);
+        log.info("\nGet event request with id: {}" +
+                "\nfor user with id: {}", eventId, userId);
         return ResponseEntity.status(200).body(null);
     }
 
@@ -67,8 +78,12 @@ public class PrivateEventController {
     @PatchMapping("{eventId}/requests")
     public ResponseEntity<EventRequestStatusUpdateResponseDto> updateEventRequest(@Valid @RequestBody EventRequestStatusUpdateRequestDto dto,
                                                                                   @PathVariable("userId") Long userId,
-                                                                                  @PathVariable("eventId") Long eventId) {
-        log.info("Update event request with id: {} for user with id: {} with body: {}", eventId, userId, dto);
+                                                                                  @PathVariable("eventId") Long eventId,
+                                                                                  HttpServletRequest request) {
+        log.info("\nUpdate event request with id: {}" +
+                "\nfor user with id: {}" +
+                "\nwith body: {}" +
+                "\nuri: {}", eventId, userId, dto, request.getRequestURI());
         return ResponseEntity.status(200).body(null);
     }
 }

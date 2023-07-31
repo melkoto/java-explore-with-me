@@ -17,4 +17,11 @@ public class CategoryMapper {
         categoryResponseDto.setName(category.getName());
         return categoryResponseDto;
     }
+
+    public static Category mapCategoryResponseDtoToCategory(CategoryResponseDto categoryResponseDto) {
+        Category category = new Category();
+        category.setId(categoryResponseDto.getId());
+        category.setName(categoryResponseDto.getName());
+        return category;
+    }
 }

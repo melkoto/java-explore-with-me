@@ -7,8 +7,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.client.StatsClient;
+import ru.practicum.main.category.repository.AdminCategoryRepository;
 import ru.practicum.main.event.dto.FullEventResponseDto;
 import ru.practicum.main.event.dto.ShortEventResponseDto;
+import ru.practicum.main.event.eventEnums.SortTypes;
 import ru.practicum.main.event.mapper.EventMapper;
 import ru.practicum.main.event.model.Event;
 import ru.practicum.main.event.repository.PublicEventRepository;
@@ -25,14 +27,16 @@ public class PublicEventServiceImpl implements PublicEventService {
     private static final String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
     private final StatsClient statsClient;
     private final PublicEventRepository publicEventRepository;
+    private final AdminCategoryRepository categoryRepository;
 
-    public PublicEventServiceImpl(StatsClient statsClient, PublicEventRepository publicEventRepository) {
+    public PublicEventServiceImpl(StatsClient statsClient, PublicEventRepository publicEventRepository, AdminCategoryRepository categoryRepository) {
         this.statsClient = statsClient;
         this.publicEventRepository = publicEventRepository;
+        this.categoryRepository = categoryRepository;
     }
 
     public List<ShortEventResponseDto> getEvents(String text, List<Integer> categories, Boolean paid, String rangeStart,
-                                                 String rangeEnd, Boolean onlyAvailable, String sort, Integer from,
+                                                 String rangeEnd, Boolean onlyAvailable, SortTypes sortType, Integer from,
                                                  Integer size, HttpServletRequest request) {
         statsClient.saveHit("ewm-main-service", request.getRequestURI(), request.getRemoteAddr(),
                 LocalDateTime.now());
@@ -44,11 +48,28 @@ public class PublicEventServiceImpl implements PublicEventService {
                 ? LocalDateTime.parse(rangeEnd, DateTimeFormatter.ofPattern(DATE_TIME_PATTERN))
                 : LocalDateTime.now().plusYears(100);
 
-        Pageable pageable = PageRequest.of(from / size, size, Sort.Direction.valueOf(sort));
+        Sort sort;
+        switch (sortType) {
+            case VIEWS:
+                sort = Sort.by(Sort.Direction.DESC, "views");
+                break;
+            case EVENT_DATE:
+            default:
+                sort = Sort.by(Sort.Direction.ASC, "eventDate");
+                break;
+        }
 
-        Page<Event> events = publicEventRepository.findAllEvents(text, categories, paid, start, end, pageable);
+        Pageable pageable = PageRequest.of(from / size, size, sort);
 
-        log.info("events: {}", events);
+        Page<Event> events = null;
+        if (sortType == SortTypes.VIEWS) {
+            events = publicEventRepository.findAllEventsOrderByViews(text, categories, paid, start, end, pageable);
+        } else if (sortType == SortTypes.EVENT_DATE) {
+            events = publicEventRepository.findAllEventsOrderByEventDate(text, categories, paid, start, end, pageable);
+        }
+
+
+        log.info("events for public: {}", events);
 
         return events.getContent().stream()
                 .map(event -> EventMapper.toEventShortDto(event, event.getConfirmedRequests(), event.getViews()))

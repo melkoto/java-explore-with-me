@@ -6,6 +6,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.main.event.dto.FullEventResponseDto;
 import ru.practicum.main.event.dto.ShortEventResponseDto;
+import ru.practicum.main.event.eventEnums.SortTypes;
 import ru.practicum.main.event.service.pub.PublicEventService;
 
 import javax.servlet.http.HttpServletRequest;
@@ -13,7 +14,7 @@ import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
-@RestController
+@RestControllerAdvice
 @RequestMapping("events")
 @Slf4j
 @Validated
@@ -31,15 +32,16 @@ public class PublicEventController {
                                                                  @RequestParam(required = false) String rangeStart,
                                                                  @RequestParam(required = false) String rangeEnd,
                                                                  @RequestParam(defaultValue = "false") Boolean onlyAvailable,
-                                                                 @RequestParam(required = false) String sort,
+                                                                 @RequestParam(required = false, defaultValue =
+                                                                         "EVENT_DATE") SortTypes sortType,
                                                                  @PositiveOrZero @RequestParam(defaultValue = "0") int from,
                                                                  @Positive @RequestParam(defaultValue = "10") int size,
                                                                  HttpServletRequest request) {
         log.info("Get events with \ntext: {}, \ncategories: {}, \npaid: {}, \nrangeStart: {}, \nrangeEnd: {}, " +
                         "\nonlyAvailable: {}, \nsort: {}, \nfrom: {}, \nsize: {}", text, categoriesId, paid, rangeStart, rangeEnd,
-                onlyAvailable, sort, from, size);
+                onlyAvailable, sortType, from, size);
         return ResponseEntity.status(200).body(publicEventService.getEvents(text, categoriesId, paid, rangeStart,
-                rangeEnd, onlyAvailable, sort, from, size, request));
+                rangeEnd, onlyAvailable, sortType, from, size, request));
     }
 
     @GetMapping("/{id}")

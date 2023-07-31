@@ -1,5 +1,6 @@
 package ru.practicum.main.event.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 import ru.practicum.main.event.eventEnums.StateAction;
@@ -9,15 +10,16 @@ import java.time.LocalDateTime;
 
 @Data
 public class UpdateEventDto {
-    @Size(min = 20, max = 2000)
+    @Size(min = 20, max = 2000, message = "Annotation must be between 20 and 2000 characters")
     private String annotation;
 
     private Integer category;
 
-    @Size(min = 20, max = 7000)
+    @Size(min = 20, max = 7000, message = "Description must be between 20 and 7000 characters")
     private String description;
 
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;
 
     private LocationDto location;
@@ -30,6 +32,6 @@ public class UpdateEventDto {
 
     private StateAction stateAction;
 
-    @Size(min = 3, max = 120)
+    @Size(min = 3, max = 120, message = "Title must be between 3 and 120 characters")
     private String title;
 }

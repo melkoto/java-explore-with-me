@@ -10,10 +10,10 @@ import ru.practicum.main.category.service.admin.AdminCategoryService;
 
 import javax.validation.Valid;
 
-@RestController
-@RequestMapping("/admin/categories")
 @Slf4j
 @Validated
+@RestController
+@RequestMapping("/admin/categories")
 public class AdminCategoryController {
 
     private final AdminCategoryService adminCategoryService;

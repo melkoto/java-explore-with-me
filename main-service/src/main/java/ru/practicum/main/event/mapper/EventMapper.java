@@ -13,6 +13,7 @@ import ru.practicum.main.user.model.User;
 
 import java.time.LocalDateTime;
 
+import static ru.practicum.main.category.mapper.CategoryMapper.mapCategoryResponseDtoToCategory;
 import static ru.practicum.main.category.mapper.CategoryMapper.mapCategoryToCategoryResponseDto;
 import static ru.practicum.main.event.mapper.LocationMapper.dtoToLocation;
 import static ru.practicum.main.event.mapper.LocationMapper.locationToDto;
@@ -40,14 +41,35 @@ public class EventMapper {
 
     public static <T extends UpdateEventDto> Event updateDtoToEvent(T updateDto, Event event,
                                                                     Location location) {
-        event.setAnnotation(updateDto.getAnnotation());
+        if (updateDto.getAnnotation() != null) {
+            event.setAnnotation(updateDto.getAnnotation());
+        } else {
+            event.setAnnotation(event.getAnnotation());
+        }
+
+        if (updateDto.getEventDate() != null) {
+            event.setEventDate(updateDto.getEventDate());
+        }
+
+        if (updateDto.getPaid() != null) {
+            event.setPaid(updateDto.getPaid());
+        }
+
+        if (updateDto.getTitle() != null) {
+            event.setTitle(updateDto.getTitle());
+        }
+
+        if (updateDto.getParticipantLimit() != null) {
+            event.setParticipantLimit(updateDto.getParticipantLimit());
+        }
+
+        if (updateDto.getRequestModeration() != null) {
+            event.setRequestModeration(updateDto.getRequestModeration());
+        }
+
         event.setDescription(updateDto.getDescription());
-        event.setEventDate(updateDto.getEventDate());
-        event.setPaid(updateDto.getPaid());
         event.setLocation(location);
-        event.setParticipantLimit(updateDto.getParticipantLimit());
-        event.setTitle(updateDto.getTitle());
-        event.setRequestModeration(updateDto.getRequestModeration());
+
         return event;
     }
 
@@ -90,18 +112,21 @@ public class EventMapper {
         return eventFullDto;
     }
 
-    public static Event createDtoToEvent(CreateEventDto newEvent, Location location) {
+    public static Event createDtoToEvent(CreateEventDto newEvent, Location location, User user) {
         if (newEvent == null) {
             return null;
         }
         Event event = new Event();
         event.setAnnotation(newEvent.getAnnotation());
-        event.setCategory(newEvent.getCategory());
+        event.setCategory(mapCategoryResponseDtoToCategory(newEvent.getCategory()));
         event.setDescription(newEvent.getDescription());
         event.setEventDate(newEvent.getEventDate());
         event.setLocation(location);
         event.setRequestModeration(newEvent.getRequestModeration());
         event.setTitle(newEvent.getTitle());
+        event.setInitiator(user);
+        event.setState(State.PENDING);
+        event.setPublishedOn(LocalDateTime.now());
 
         if (newEvent.getParticipantLimit() == null) {
             event.setParticipantLimit(0);
