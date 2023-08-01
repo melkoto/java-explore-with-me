@@ -2,7 +2,6 @@ package ru.practicum.main.request.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import ru.practicum.main.event.eventEnums.State;
 import ru.practicum.main.event.model.Event;
 import ru.practicum.main.request.enums.Status;
 import ru.practicum.main.request.model.Request;

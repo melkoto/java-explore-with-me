@@ -1,7 +1,6 @@
 package ru.practicum.main.request.dto;
 
 import lombok.Data;
-import ru.practicum.main.event.eventEnums.State;
 import ru.practicum.main.request.enums.Status;
 
 import java.util.List;

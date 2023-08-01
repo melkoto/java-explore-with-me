@@ -10,7 +10,8 @@ import ru.practicum.main.user.model.User;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static ru.practicum.main.request.enums.Status.*;
+import static ru.practicum.main.request.enums.Status.CONFIRMED;
+import static ru.practicum.main.request.enums.Status.PENDING;
 
 public class RequestMapper {
 

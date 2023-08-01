@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 import static ru.practicum.main.event.eventEnums.State.PENDING;
 import static ru.practicum.main.event.eventEnums.State.PUBLISHED;
 import static ru.practicum.main.event.eventEnums.StateAction.PUBLISH_EVENT;
-import static ru.practicum.main.event.eventEnums.StateAction.REJECT_EVENT;
 import static ru.practicum.main.event.mapper.EventMapper.toEventDto;
 import static ru.practicum.main.event.mapper.EventMapper.updateDtoToEvent;
 import static ru.practicum.main.event.mapper.LocationMapper.dtoToLocation;
@@ -94,7 +93,7 @@ public class AdminEventServiceImpl implements AdminEventService {
             event.setState(PUBLISHED);
             event.setPublishedOn(LocalDateTime.now().withNano(0));
             event.setRequestModeration(true);
-        } else if (eventDto.getStateAction()!= null && eventDto.getStateAction().equals(StateAction.REJECT_EVENT)) {
+        } else if (eventDto.getStateAction() != null && eventDto.getStateAction().equals(StateAction.REJECT_EVENT)) {
             event.setState(State.CANCELED);
         }
 
