@@ -7,31 +7,38 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.main.compilation.dto.CompilationResponseDto;
 import ru.practicum.main.compilation.dto.CreateCompilationDto;
 import ru.practicum.main.compilation.dto.UpdateCompilationDto;
+import ru.practicum.main.compilation.service.admin.AdminCompilationService;
 
 import javax.validation.Valid;
 
-@RestController
-@RequestMapping("/admin/compilations")
 @Slf4j
 @Validated
+@RestController
+@RequestMapping("/admin/compilations")
 public class AdminCompilationController {
+    private final AdminCompilationService adminCompilationService;
+
+    public AdminCompilationController(AdminCompilationService adminCompilationService) {
+        this.adminCompilationService = adminCompilationService;
+    }
 
     @PostMapping
     public ResponseEntity<CompilationResponseDto> createCompilation(@Valid @RequestBody CreateCompilationDto dto) {
         log.info("createCompilation: {}", dto);
-        return ResponseEntity.status(200).body(null);
+        return ResponseEntity.status(201).body(adminCompilationService.createCompilation(dto));
     }
 
     @DeleteMapping("/{compId}")
     public ResponseEntity<Void> deleteCompilation(@PathVariable("compId") Long compId) {
         log.info("deleteCompilation: compId={}", compId);
-        return ResponseEntity.status(204).build();
+        adminCompilationService.deleteCompilation(compId);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{compId}")
     public ResponseEntity<CompilationResponseDto> updateCompilation(@PathVariable("compId") Long compId,
                                                                     @Valid @RequestBody UpdateCompilationDto dto) {
         log.info("updateCompilation: compId={}, {}", compId, dto);
-        return ResponseEntity.status(200).body(null);
+        return ResponseEntity.status(200).body(adminCompilationService.updateCompilation(compId, dto));
     }
 }

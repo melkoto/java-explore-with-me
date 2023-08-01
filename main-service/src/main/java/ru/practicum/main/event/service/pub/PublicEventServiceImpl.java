@@ -41,8 +41,7 @@ public class PublicEventServiceImpl implements PublicEventService {
     public List<ShortEventResponseDto> getEvents(String text, List<Integer> categories, Boolean paid, String rangeStart,
                                                  String rangeEnd, Boolean onlyAvailable, SortTypes sortType, Integer from,
                                                  Integer size, HttpServletRequest request) {
-        statsClient.saveHit("ewm-main-service", request.getRequestURI(), request.getRemoteAddr(),
-                LocalDateTime.now());
+        statsClient.saveHit("ewm-main-service", request.getRequestURI(), request.getRemoteAddr(), LocalDateTime.now());
 
         LocalDateTime start = (rangeStart != null)
                 ? LocalDateTime.parse(rangeStart, DateTimeFormatter.ofPattern(DATE_TIME_PATTERN))

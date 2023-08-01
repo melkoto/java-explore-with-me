@@ -52,25 +52,27 @@ public class PrivateRequestServiceImpl implements PrivateRequestService {
 
         Request request = requestRepository.findByRequesterIdAndEventId(userId, eventId);
 
+        Integer counted = requestRepository.countByEventId(eventId);
+
         if (event.getParticipantLimit() != null && event.getParticipantLimit() != 0 &&
-                event.getParticipantLimit() <= requestRepository.countByEventId(eventId)) {
-            throw new ConflictException("Event with id=" + eventId + " has reached the limit of participants");
+                event.getParticipantLimit() <= counted) {
+            throw new ConflictException("Event with id=" + eventId + " has reached the limit of participants. " +
+                    "Participant limit is " + event.getParticipantLimit() + " and there are " + counted + " participants");
         }
 
         validateEventConstraints(event, userId);
-        validateParticipantLimit(event);
         validateRepeatRequest(user, event);
 
         Request updatedRequest = (request == null) ? new Request() : request;
-        updatedRequest = toRequest(updatedRequest, user, event);
+        Request result = toRequest(updatedRequest, user, event);
 
         if (event.getRequestModeration()) {
-            updatedRequest.setStatus(PENDING);
+            result.setStatus(PENDING);
         } else {
-            updatedRequest.setStatus(CONFIRMED);
+            result.setStatus(CONFIRMED);
         }
 
-        return toParticipationRequestDto(requestRepository.save(updatedRequest));
+        return toParticipationRequestDto(requestRepository.save(result));
     }
 
     @Override
@@ -124,22 +126,6 @@ public class PrivateRequestServiceImpl implements PrivateRequestService {
         if (exists) {
             throw new ConflictException("User with id=" + user.getId() +
                     " has already requested participation in event with id=" + event.getId());
-        }
-    }
-
-    private void validateParticipantLimit(Event event) {
-        Integer participantLimit = event.getParticipantLimit();
-        Long eventId = event.getId();
-
-        Long currentParticipants = requestRepository.countByEventIdAndStatus(eventId, CONFIRMED);
-
-        log.info("ParticipantLimit: {}", participantLimit);
-        log.info("Current participants count: {}", currentParticipants);
-
-        if (participantLimit > 0 && participantLimit <= currentParticipants) {
-            throw new ConflictException("Event with id=" + eventId + " has reached participant limit. " +
-                    "Participant limit = " + participantLimit + ". " +
-                    "Current participants count = " + currentParticipants + ".");
         }
     }
 }

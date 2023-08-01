@@ -34,6 +34,7 @@ import static ru.practicum.main.event.eventEnums.StateAction.*;
 import static ru.practicum.main.event.mapper.EventMapper.*;
 import static ru.practicum.main.event.mapper.LocationMapper.dtoToLocation;
 import static ru.practicum.main.event.mapper.LocationMapper.locationToDto;
+import static ru.practicum.main.request.enums.Status.CONFIRMED;
 import static ru.practicum.main.request.mapper.RequestMapper.toEventRequestStatusUpdateResult;
 import static ru.practicum.main.request.mapper.RequestMapper.toParticipationRequestDto;
 
@@ -61,10 +62,10 @@ public class PrivateEventServiceImpl implements PrivateEventService {
     public List<ShortEventResponseDto> getEvents(Long userId, Integer from, Integer size) {
         validateUser(userId);
 
-        // TODO add confirmed requests and views
         List<ShortEventResponseDto> events = eventRepository.findAllByInitiatorId(userId, PageRequest.of(from, size))
                 .stream()
-                .map(event -> toEventShortDto(event, null, 0L))
+                .map(event -> toEventShortDto(event,
+                        requestRepository.countByEventIdAndStatus(event.getId(), CONFIRMED).intValue(), 0L))
                 .collect(Collectors.toList());
 
         List<String> listOfUris = events.stream()
@@ -77,12 +78,17 @@ public class PrivateEventServiceImpl implements PrivateEventService {
 
         return events.stream()
                 .peek(event -> {
-                    if (bodyWithViews instanceof LinkedHashMap) {
-                        event.setViews(Long.parseLong(((LinkedHashMap<?, ?>) bodyWithViews).get(event.getId()
-                                .toString()).toString()));
+                    if (bodyWithViews != null && bodyWithViews instanceof LinkedHashMap) {
+                        Object view = ((LinkedHashMap<?, ?>) bodyWithViews).get(event.getId().toString());
+                        if (view != null) {
+                            event.setViews(Long.parseLong(view.toString()));
+                        } else {
+                            event.setViews(0L);
+                        }
                     }
                 })
                 .collect(Collectors.toList());
+
     }
 
     @Override
@@ -97,10 +103,10 @@ public class PrivateEventServiceImpl implements PrivateEventService {
                 .findById(userId)
                 .orElseThrow(() -> new NotFoundException("User with id " + userId + " not found"));
 
-        return toEventDto(eventRepository
-                .save(createDtoToEvent(
-                        createEventDto, saveLocation(
-                                createEventDto.getLocation()), user)));
+        Event event = createDtoToEvent(createEventDto, saveLocation(createEventDto.getLocation()), user);
+        event.setConfirmedRequests(requestRepository.countByEventIdAndStatus(event.getId(), CONFIRMED).intValue());
+
+        return toEventDto(eventRepository.save(event));
     }
 
     @Override
@@ -205,7 +211,7 @@ public class PrivateEventServiceImpl implements PrivateEventService {
     }
 
     private void processRejectedRequest(Request request, List<ParticipationRequestDto> rejectedRequests) {
-        if (Status.CONFIRMED.equals(request.getStatus())) {
+        if (CONFIRMED.equals(request.getStatus())) {
             log.warn("Already confirmed request cannot be rejected!");
             throw new ConflictException("Already confirmed request cannot be rejected");
         }
@@ -229,7 +235,7 @@ public class PrivateEventServiceImpl implements PrivateEventService {
             }
 
             event.setConfirmedRequests(event.getConfirmedRequests() + 1);
-            request.setStatus(Status.CONFIRMED);
+            request.setStatus(CONFIRMED);
             confirmedRequests.add(toParticipationRequestDto(request));
             requestRepository.save(request);
         }

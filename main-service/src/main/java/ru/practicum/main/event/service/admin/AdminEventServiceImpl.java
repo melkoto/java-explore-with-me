@@ -48,7 +48,7 @@ public class AdminEventServiceImpl implements AdminEventService {
         List<FullEventResponseDto> events = eventRepository.getEventsFiltered(
                         users, states, categories, rangeStart, rangeEnd, PageRequest.of(from, size))
                 .stream()
-                .map(event -> EventMapper.toEventFullDto(event, null, 0))
+                .map(event -> EventMapper.toEventFullDto(event, event.getViews(), event.getConfirmedRequests()))
                 .collect(Collectors.toList());
 
         List<String> listOfUris = events.stream()
@@ -72,7 +72,7 @@ public class AdminEventServiceImpl implements AdminEventService {
     @Override
     public FullEventResponseDto updateEvent(Long eventId, UpdateEventDto eventDto) {
         Event event = eventRepository.findById(eventId).orElseThrow(() ->
-                new ConflictException("Событие с id " + eventId + " не найдено."));
+                new ConflictException("Event with id " + eventId + " not found."));
 
         log.info("Event entity before update: {}", event);
 
@@ -80,18 +80,20 @@ public class AdminEventServiceImpl implements AdminEventService {
             throw new ConflictException("Can not update published event.");
         }
 
-        if (eventDto.getEventDate() != null &&
-                !event.getPublishedOn().isBefore(eventDto.getEventDate().minusHours(1))) {
-            throw new ConflictException("Date of event must be at least one hour after publication");
-        }
-
         if (eventDto.getStateAction() != null && eventDto.getStateAction().equals(PUBLISH_EVENT) && !event.getState().equals(PENDING)) {
             throw new ConflictException("Event can be published only if it is in pending state");
         }
 
         if (eventDto.getStateAction() != null && eventDto.getStateAction().equals(StateAction.PUBLISH_EVENT)) {
+            LocalDateTime now = LocalDateTime.now();
+
+            if (eventDto.getEventDate() != null &&
+                    !now.isBefore(eventDto.getEventDate().minusHours(1))) {
+                throw new ConflictException("Publication date must be at least 1 hour before event date.");
+            }
+
             event.setState(PUBLISHED);
-            event.setPublishedOn(LocalDateTime.now().withNano(0));
+            event.setPublishedOn(now);
             event.setRequestModeration(true);
         } else if (eventDto.getStateAction() != null && eventDto.getStateAction().equals(StateAction.REJECT_EVENT)) {
             event.setState(State.CANCELED);
@@ -112,8 +114,6 @@ public class AdminEventServiceImpl implements AdminEventService {
         if (eventDto.getTitle() != null && !eventDto.getTitle().isBlank()) {
             event.setTitle(eventDto.getTitle());
         }
-
-        event.setState(PUBLISHED);
 
         FullEventResponseDto fullEventResponseDto = toEventDto(eventRepository.save(
                 updateDtoToEvent(eventDto, event,

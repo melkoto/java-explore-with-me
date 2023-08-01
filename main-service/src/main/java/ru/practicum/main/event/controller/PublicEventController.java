@@ -26,20 +26,22 @@ public class PublicEventController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ShortEventResponseDto>> getEvents(@RequestParam(required = false) String text,
-                                                                 @RequestParam(name = "categories", required = false) List<Integer> categoriesId,
-                                                                 @RequestParam(required = false) Boolean paid,
-                                                                 @RequestParam(required = false) String rangeStart,
-                                                                 @RequestParam(required = false) String rangeEnd,
-                                                                 @RequestParam(defaultValue = "false") Boolean onlyAvailable,
-                                                                 @RequestParam(required = false, defaultValue =
-                                                                         "EVENT_DATE") SortTypes sortType,
-                                                                 @PositiveOrZero @RequestParam(defaultValue = "0") int from,
-                                                                 @Positive @RequestParam(defaultValue = "10") int size,
-                                                                 HttpServletRequest request) {
+    public ResponseEntity<List<ShortEventResponseDto>> getEvents(
+            @RequestParam(required = false) String text,
+            @RequestParam(name = "categories", required = false) List<Integer> categoriesId,
+            @RequestParam(required = false) Boolean paid,
+            @RequestParam(required = false) String rangeStart,
+            @RequestParam(required = false) String rangeEnd,
+            @RequestParam(defaultValue = "false") Boolean onlyAvailable,
+            @RequestParam(required = false, defaultValue = "EVENT_DATE") SortTypes sortType,
+            @PositiveOrZero @RequestParam(defaultValue = "0") int from,
+            @Positive @RequestParam(defaultValue = "10") int size, HttpServletRequest request) {
+
         log.info("Get events with \ntext: {}, \ncategories: {}, \npaid: {}, \nrangeStart: {}, \nrangeEnd: {}, " +
-                        "\nonlyAvailable: {}, \nsort: {}, \nfrom: {}, \nsize: {}", text, categoriesId, paid, rangeStart, rangeEnd,
+                        "\nonlyAvailable: {}, \nsort: {}, \nfrom: {}, \nsize: {}",
+                text, categoriesId, paid, rangeStart, rangeEnd,
                 onlyAvailable, sortType, from, size);
+
         return ResponseEntity.status(200).body(publicEventService.getEvents(text, categoriesId, paid, rangeStart,
                 rangeEnd, onlyAvailable, sortType, from, size, request));
     }

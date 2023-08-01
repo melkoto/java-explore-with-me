@@ -10,6 +10,7 @@ import ru.practicum.main.event.model.Event;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Repository
 public interface AdminEventRepository extends JpaRepository<Event, Long> {
@@ -21,4 +22,8 @@ public interface AdminEventRepository extends JpaRepository<Event, Long> {
             @Param("fromDate") LocalDateTime from,
             @Param("toDate") LocalDateTime to,
             PageRequest pr);
+
+    Set<Event> findAllByIdIn(Set<Long> eventIds);
+
+    Set<Event> findByIdInAndState(Set<Long> eventIds, State state);
 }

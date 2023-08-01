@@ -1,13 +1,17 @@
 package ru.practicum.main.compilation.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import ru.practicum.main.event.dto.ShortEventResponseDto;
+import lombok.NoArgsConstructor;
+import ru.practicum.main.event.model.Event;
 
-import java.util.List;
+import java.util.Set;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class CompilationResponseDto {
-    private List<ShortEventResponseDto> events;
+    private Set<Event> events;
 
     private Long id;
 

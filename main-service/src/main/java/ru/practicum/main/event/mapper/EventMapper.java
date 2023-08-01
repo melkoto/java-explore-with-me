@@ -17,10 +17,23 @@ import static ru.practicum.main.category.mapper.CategoryMapper.mapCategoryRespon
 import static ru.practicum.main.category.mapper.CategoryMapper.mapCategoryToCategoryResponseDto;
 import static ru.practicum.main.event.mapper.LocationMapper.dtoToLocation;
 import static ru.practicum.main.event.mapper.LocationMapper.locationToDto;
+import static ru.practicum.main.user.mapper.UserMapper.userResponseDtoToUser;
 import static ru.practicum.main.user.mapper.UserMapper.userToUserResponseDto;
 
 @Data
 public class EventMapper {
+    private static Event shortEventResponseDtoToEvent(ShortEventResponseDto shortEventResponseDto) {
+        Event event = new Event();
+        event.setId(shortEventResponseDto.getId());
+        event.setTitle(shortEventResponseDto.getTitle());
+        event.setAnnotation(shortEventResponseDto.getAnnotation());
+        event.setCategory(mapCategoryResponseDtoToCategory(shortEventResponseDto.getCategory()));
+        event.setPaid(shortEventResponseDto.isPaid());
+        event.setEventDate(shortEventResponseDto.getEventDate());
+        event.setInitiator(userResponseDtoToUser(shortEventResponseDto.getInitiator()));
+        return event;
+    }
+
     public static Event toEvent(CreateEventDto createEventDto, User user, Category category) {
         Event event = new Event();
         event.setAnnotation(createEventDto.getAnnotation());
@@ -86,7 +99,7 @@ public class EventMapper {
         eventDto.setDescription(event.getDescription());
         eventDto.setParticipantLimit(event.getParticipantLimit());
         eventDto.setState(event.getState());
-        eventDto.setCreatedOn(event.getCreatedOn());
+        eventDto.setCreatedOn(LocalDateTime.now());
         eventDto.setLocation(locationToDto(event.getLocation()));
         eventDto.setRequestModeration(event.getRequestModeration());
         return eventDto;
@@ -127,7 +140,7 @@ public class EventMapper {
         event.setTitle(newEvent.getTitle());
         event.setInitiator(user);
         event.setState(State.PENDING);
-        event.setPublishedOn(LocalDateTime.now());
+        event.setCreatedOn(LocalDateTime.now());
 
         if (newEvent.getParticipantLimit() == null) {
             event.setParticipantLimit(0);
