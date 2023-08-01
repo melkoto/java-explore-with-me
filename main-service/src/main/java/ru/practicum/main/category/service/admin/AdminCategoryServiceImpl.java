@@ -60,6 +60,7 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
 
         if (adminCategoryRepository.findByName(categoryDto.getName()).isPresent()) {
             throw new ConflictException("Category with name: " + categoryDto.getName() + " already exist");
+//            return mapCategoryToCategoryResponseDto(adminCategoryRepository.findByName(categoryDto.getName()).get());
         }
 
         Category category = adminCategoryRepository.save(mapCategoryDtoToCategory(categoryDto));

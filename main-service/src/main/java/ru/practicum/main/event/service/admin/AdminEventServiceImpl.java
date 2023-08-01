@@ -9,6 +9,7 @@ import ru.practicum.main.event.dto.FullEventResponseDto;
 import ru.practicum.main.event.dto.LocationDto;
 import ru.practicum.main.event.dto.UpdateEventDto;
 import ru.practicum.main.event.eventEnums.State;
+import ru.practicum.main.event.eventEnums.StateAction;
 import ru.practicum.main.event.mapper.EventMapper;
 import ru.practicum.main.event.model.Event;
 import ru.practicum.main.event.model.Location;
@@ -18,6 +19,7 @@ import ru.practicum.main.event.repository.LocationRepository;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static ru.practicum.main.event.eventEnums.State.PENDING;
@@ -70,37 +72,54 @@ public class AdminEventServiceImpl implements AdminEventService {
 
     @Override
     public FullEventResponseDto updateEvent(Long eventId, UpdateEventDto eventDto) {
-        Event eventEntity = eventRepository.findById(eventId).orElseThrow(() ->
+        Event event = eventRepository.findById(eventId).orElseThrow(() ->
                 new ConflictException("Событие с id " + eventId + " не найдено."));
 
-        log.info("Event entity before update: {}", eventEntity);
+        log.info("Event entity before update: {}", event);
 
-        if (eventEntity.getState().equals(PUBLISHED)) {
+        if (event.getState().equals(PUBLISHED)) {
             throw new ConflictException("Can not update published event.");
         }
 
-        log.info("Event entity: {}", eventEntity);
-
         if (eventDto.getEventDate() != null &&
-                !eventEntity.getPublishedOn().isBefore(eventDto.getEventDate().minusHours(1))) {
-            // translate line below to english
+                !event.getPublishedOn().isBefore(eventDto.getEventDate().minusHours(1))) {
             throw new ConflictException("Date of event must be at least one hour after publication");
         }
 
-        if (eventDto.getStateAction().equals(PUBLISH_EVENT) && !eventEntity.getState().equals(PENDING)) {
+        if (eventDto.getStateAction() != null && eventDto.getStateAction().equals(PUBLISH_EVENT) && !event.getState().equals(PENDING)) {
             throw new ConflictException("Event can be published only if it is in pending state");
         }
 
-        if (eventDto.getStateAction().equals(REJECT_EVENT) && eventEntity.getState().equals(PUBLISHED)) {
-            throw new ConflictException("Event can not be rejected if it is in published state");
+        if (eventDto.getStateAction() != null && eventDto.getStateAction().equals(StateAction.PUBLISH_EVENT)) {
+            event.setState(PUBLISHED);
+            event.setPublishedOn(LocalDateTime.now().withNano(0));
+            event.setRequestModeration(true);
+        } else if (eventDto.getStateAction()!= null && eventDto.getStateAction().equals(StateAction.REJECT_EVENT)) {
+            event.setState(State.CANCELED);
         }
 
-        eventEntity.setState(PUBLISHED);
+        if (eventDto.getAnnotation() != null && !eventDto.getAnnotation().isBlank()) {
+            event.setAnnotation(eventDto.getAnnotation());
+        }
+
+        if (eventDto.getDescription() != null && !eventDto.getDescription().isBlank()) {
+            event.setDescription(eventDto.getDescription());
+        }
+
+        event.setEventDate(Objects.requireNonNullElse(eventDto.getEventDate(), event.getEventDate()));
+        event.setPaid(Objects.requireNonNullElse(eventDto.getPaid(), event.getPaid()));
+        event.setParticipantLimit(Objects.requireNonNullElse(eventDto.getParticipantLimit(), event.getParticipantLimit()));
+
+        if (eventDto.getTitle() != null && !eventDto.getTitle().isBlank()) {
+            event.setTitle(eventDto.getTitle());
+        }
+
+        event.setState(PUBLISHED);
 
         FullEventResponseDto fullEventResponseDto = toEventDto(eventRepository.save(
-                updateDtoToEvent(eventDto, eventEntity,
+                updateDtoToEvent(eventDto, event,
                         eventDto.getLocation() == null
-                                ? eventEntity.getLocation()
+                                ? event.getLocation()
                                 : saveLocation(eventDto.getLocation()))));
 
         log.info("Event full response dto after update: {}", fullEventResponseDto);

@@ -11,6 +11,7 @@ import ru.practicum.main.user.mapper.UserMapper;
 import ru.practicum.main.user.model.User;
 import ru.practicum.main.user.repository.AdminUserRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,8 +29,15 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     @Override
     public List<UserResponseDto> getUsers(List<Long> ids, Integer from, Integer size) {
+        if (ids == null) {
+            return adminUserRepository.findAll(PageRequest.of(from / size, size))
+                    .stream()
+                    .map(UserMapper::userToUserResponseDto)
+                    .collect(Collectors.toList());
+        }
+
         PageRequest pageRequest = PageRequest.of(from / size, size);
-        List<UserResponseDto> users = adminUserRepository.findByIdIn(ids, pageRequest).getContent()
+        List<UserResponseDto> users = adminUserRepository.findByIdIn(ids, pageRequest)
                 .stream()
                 .map(UserMapper::userToUserResponseDto)
                 .collect(Collectors.toList());

@@ -34,4 +34,8 @@ public interface PrivateRequestRepository extends JpaRepository<Request, Long> {
     List<Request> findAllByIdInAndEvent(List<Long> requestIds, Event event);
 
     long countByEventAndStatus(Event event, Status status);
+
+    Request findByRequesterIdAndEventId(Long userId, Long eventId);
+
+    Integer countByEventId(Long eventId);
 }

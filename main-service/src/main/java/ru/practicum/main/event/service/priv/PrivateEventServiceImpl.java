@@ -4,10 +4,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.client.StatsClient;
-import ru.practicum.main.category.repository.AdminCategoryRepository;
 import ru.practicum.main.error.ConflictException;
 import ru.practicum.main.error.NotFoundException;
 import ru.practicum.main.event.dto.*;
+import ru.practicum.main.event.eventEnums.State;
+import ru.practicum.main.event.eventEnums.StateAction;
 import ru.practicum.main.event.model.Event;
 import ru.practicum.main.event.model.Location;
 import ru.practicum.main.event.repository.LocationRepository;
@@ -23,18 +24,18 @@ import ru.practicum.main.user.model.User;
 import ru.practicum.main.user.repository.AdminUserRepository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static ru.practicum.main.event.eventEnums.State.*;
+import static ru.practicum.main.event.eventEnums.StateAction.*;
 import static ru.practicum.main.event.mapper.EventMapper.*;
 import static ru.practicum.main.event.mapper.LocationMapper.dtoToLocation;
 import static ru.practicum.main.event.mapper.LocationMapper.locationToDto;
-import static ru.practicum.main.request.enums.Status.CONFIRMED;
-import static ru.practicum.main.request.enums.Status.REJECTED;
 import static ru.practicum.main.request.mapper.RequestMapper.toEventRequestStatusUpdateResult;
+import static ru.practicum.main.request.mapper.RequestMapper.toParticipationRequestDto;
 
 @Service
 @Slf4j
@@ -42,16 +43,16 @@ public class PrivateEventServiceImpl implements PrivateEventService {
     private final AdminUserRepository userRepository;
     private final PrivateEventRepository eventRepository;
     private final StatsClient statsClient;
-    private final AdminCategoryRepository categoryRepository;
 
     private final LocationRepository locationRepository;
     private final PrivateRequestRepository requestRepository;
 
-    public PrivateEventServiceImpl(AdminUserRepository userRepository, PrivateEventRepository eventRepository, StatsClient statsClient, AdminCategoryRepository categoryRepository, LocationRepository locationRepository, PrivateRequestRepository requestRepository) {
+    public PrivateEventServiceImpl(AdminUserRepository userRepository, PrivateEventRepository eventRepository,
+                                   StatsClient statsClient, LocationRepository locationRepository,
+                                   PrivateRequestRepository requestRepository) {
         this.userRepository = userRepository;
         this.eventRepository = eventRepository;
         this.statsClient = statsClient;
-        this.categoryRepository = categoryRepository;
         this.locationRepository = locationRepository;
         this.requestRepository = requestRepository;
     }
@@ -131,6 +132,20 @@ public class PrivateEventServiceImpl implements PrivateEventService {
             throw new ConflictException("The event date and time should not be less than two hours from the current moment");
         }
 
+        if (PUBLISH_EVENT.equals(updateEventUserRequestDto.getStateAction())) {
+            event.setState(PUBLISHED);
+        } else if (REJECT_EVENT.equals(updateEventUserRequestDto.getStateAction())) {
+            event.setState(State.REJECTED);
+        } else if (SEND_TO_REVIEW.equals(updateEventUserRequestDto.getStateAction())) {
+            event.setState(State.PENDING);
+        } else if (StateAction.CANCEL_REVIEW.equals(updateEventUserRequestDto.getStateAction())) {
+            event.setState(State.CANCELED);
+        }
+
+        if (updateEventUserRequestDto.getTitle() != null) {
+            event.setTitle(updateEventUserRequestDto.getTitle());
+        }
+
         FullEventResponseDto eventDto = toEventDto(eventRepository.save(
                 updateDtoToEvent(updateEventUserRequestDto, event,
                         saveLocation(updateEventUserRequestDto.getLocation() == null
@@ -144,27 +159,35 @@ public class PrivateEventServiceImpl implements PrivateEventService {
 
     @Override
     public EventRequestStatusUpdateResponseDto updateEventRequest(
-            EventRequestStatusUpdateRequestDto requestDto, Long userId, Long eventId) {
+            EventRequestStatusUpdateRequestDto statusUpdateRequest, Long userId, Long eventId) {
         validateUser(userId);
 
-        Event event = eventRepository.findById(eventId).orElseThrow(() ->
-                new NotFoundException(String.format("Event with id = %d not found.", eventId)));
+        Event event = eventRepository.getReferenceById(eventId);
 
-        long confirmedRequests = requestRepository.countByEventAndStatus(event, Status.CONFIRMED);
-        List<Request> requests = requestRepository.findAllByIdInAndEventId(requestDto.getRequestIds(), eventId);
-        Map<Status, List<ParticipationRequestDto>> requestsByStatus = getRequestsByStatus(requests);
+        if (!event.getRequestModeration() || event.getParticipantLimit().equals(0)) {
+            return new EventRequestStatusUpdateResponseDto();
+        }
 
-        log.info("Confirmed requests: {}", confirmedRequests);
-        log.info("Event capacity: {}", event.getParticipantLimit());
-        log.info("Requests before update by status: {}, size: {}", requests, requests.size());
+        if (event.getParticipantLimit() != 0 && event.getParticipantLimit() <= requestRepository.countByEventId(eventId)) {
+            throw new ConflictException("Event with id=" + eventId + " has reached the limit of participants");
+        }
 
-        requests = updateRequestStatus(requests, event, requestDto);
+        List<ParticipationRequestDto> confirmedRequests = new ArrayList<>();
+        List<ParticipationRequestDto> rejectedRequests = new ArrayList<>();
 
-        log.info("Requests after update by status: {}, size: {}", requests, requests.size());
-        log.info("Event request status updated. Event id = {}, user id = {}, status = {}", eventId, userId,
-                requestDto.getStatus());
+        for (Long id : statusUpdateRequest.getRequestIds()) {
+            Request request = requestRepository.getReferenceById(id);
+            switch (statusUpdateRequest.getStatus()) {
+                case REJECTED:
+                    processRejectedRequest(request, rejectedRequests);
+                    break;
+                case CONFIRMED:
+                    processConfirmedRequest(request, confirmedRequests, rejectedRequests, event);
+                    break;
+            }
+        }
 
-        return toEventRequestStatusUpdateResult(requestsByStatus.get(CONFIRMED), requestsByStatus.get(REJECTED));
+        return toEventRequestStatusUpdateResult(confirmedRequests, rejectedRequests);
     }
 
     @Override
@@ -181,33 +204,41 @@ public class PrivateEventServiceImpl implements PrivateEventService {
                 .collect(Collectors.toList());
     }
 
+    private void processRejectedRequest(Request request, List<ParticipationRequestDto> rejectedRequests) {
+        if (Status.CONFIRMED.equals(request.getStatus())) {
+            log.warn("Already confirmed request cannot be rejected!");
+            throw new ConflictException("Already confirmed request cannot be rejected");
+        }
+
+        request.setStatus(Status.REJECTED);
+        rejectedRequests.add(toParticipationRequestDto(request));
+        requestRepository.save(request);
+    }
+
+    private void processConfirmedRequest(Request request, List<ParticipationRequestDto> confirmedRequests,
+                                         List<ParticipationRequestDto> rejectedRequests, Event event) {
+        if (event.getConfirmedRequests() >= event.getParticipantLimit()) {
+            log.warn("The participant limit has been reached for event with id={}!", event.getId());
+            request.setStatus(Status.REJECTED);
+            rejectedRequests.add(toParticipationRequestDto(request));
+            requestRepository.save(request);
+        } else {
+            if (!Status.PENDING.equals(request.getStatus())) {
+                log.warn("Only requests with PENDING status can be confirmed!");
+                throw new ConflictException("Request must have status PENDING");
+            }
+
+            event.setConfirmedRequests(event.getConfirmedRequests() + 1);
+            request.setStatus(Status.CONFIRMED);
+            confirmedRequests.add(toParticipationRequestDto(request));
+            requestRepository.save(request);
+        }
+    }
+
     private void validateUser(Long userId) {
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException("User with id " + userId + " not found");
         }
-    }
-
-    private List<Request> updateRequestStatus(List<Request> requests, Event event,
-                                              EventRequestStatusUpdateRequestDto requestDto) {
-        return requests.stream()
-                .filter(request -> shouldUpdateStatus(request, event))
-                .peek(request -> request.setStatus(requestDto.getStatus()))
-                .map(requestRepository::save)
-                .collect(Collectors.toList());
-    }
-
-    private boolean shouldUpdateStatus(Request request, Event event) {
-        // Нужна ли пре-модерация заявок на участие. Если true, то все заявки будут ожидать подтверждения инициатором
-        // события. Если false - то будут подтверждаться автоматически
-        return !request.getStatus().equals(CONFIRMED) &&
-                (event.getParticipantLimit() > 0 || event.getRequestModeration()) &&
-                request.getStatus().equals(REJECTED);
-    }
-
-    private Map<Status, List<ParticipationRequestDto>> getRequestsByStatus(List<Request> requests) {
-        return requests.stream()
-                .collect(Collectors.groupingBy(Request::getStatus,
-                        Collectors.mapping(RequestMapper::toParticipationRequestDto, Collectors.toList())));
     }
 
     private Location saveLocation(LocationDto locationDto) {

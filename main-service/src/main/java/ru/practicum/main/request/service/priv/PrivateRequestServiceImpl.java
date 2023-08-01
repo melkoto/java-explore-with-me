@@ -50,23 +50,27 @@ public class PrivateRequestServiceImpl implements PrivateRequestService {
                 .orElseThrow(() -> new NotFoundException("User with id=" + userId + " was not found"));
 
 
-        Request request = toRequest(user, event);
+        Request request = requestRepository.findByRequesterIdAndEventId(userId, eventId);
 
-        log.info("createRequest request = {}", request);
-        log.info("createRequest event = {}", event);
-        log.info("createRequest user = {}", user);
-
-        validateEventConstraints(event, userId);
-        validateParticipantLimit(event, eventId);
-        validateRepeatRequest(user, event);
-
-        if (event.getRequestModeration()) {
-            request.setStatus(PENDING);
-        } else {
-            request.setStatus(CONFIRMED);
+        if (event.getParticipantLimit() != null && event.getParticipantLimit() != 0 &&
+                event.getParticipantLimit() <= requestRepository.countByEventId(eventId)) {
+            throw new ConflictException("Event with id=" + eventId + " has reached the limit of participants");
         }
 
-        return toParticipationRequestDto(requestRepository.save(request));
+        validateEventConstraints(event, userId);
+        validateParticipantLimit(event);
+        validateRepeatRequest(user, event);
+
+        Request updatedRequest = (request == null) ? new Request() : request;
+        updatedRequest = toRequest(updatedRequest, user, event);
+
+        if (event.getRequestModeration()) {
+            updatedRequest.setStatus(PENDING);
+        } else {
+            updatedRequest.setStatus(CONFIRMED);
+        }
+
+        return toParticipationRequestDto(requestRepository.save(updatedRequest));
     }
 
     @Override
@@ -102,9 +106,9 @@ public class PrivateRequestServiceImpl implements PrivateRequestService {
         Long initiatorId = event.getInitiator().getId();
         State state = event.getState();
 
-        log.info("event.getInitiator().getId() = {}", initiatorId);
-        log.info("userId = {}", userId);
-        log.info("event.getState() = {}", state);
+        log.info("InitiatorId: {}", initiatorId);
+        log.info("UserId: {}", userId);
+        log.info("Event State: {}", state);
 
         if (Objects.equals(initiatorId, userId) || state != PUBLISHED) {
             throw new ConflictException(String.format("User with id=%d can't participate in event with id=%d "
@@ -123,12 +127,14 @@ public class PrivateRequestServiceImpl implements PrivateRequestService {
         }
     }
 
-    private void validateParticipantLimit(Event event, Long eventId) {
+    private void validateParticipantLimit(Event event) {
         Integer participantLimit = event.getParticipantLimit();
+        Long eventId = event.getId();
+
         Long currentParticipants = requestRepository.countByEventIdAndStatus(eventId, CONFIRMED);
 
-        log.info("participantLimit = {}", participantLimit);
-        log.info("current participants count = {}", currentParticipants);
+        log.info("ParticipantLimit: {}", participantLimit);
+        log.info("Current participants count: {}", currentParticipants);
 
         if (participantLimit > 0 && participantLimit <= currentParticipants) {
             throw new ConflictException("Event with id=" + eventId + " has reached participant limit. " +

@@ -25,8 +25,7 @@ public class RequestMapper {
         return request;
     }
 
-    public static Request toRequest(User user, Event event) {
-        Request request = new Request();
+    public static Request toRequest(Request request, User user, Event event) {
         request.setRequester(user);
         request.setEvent(event);
         request.setCreated(LocalDateTime.now());

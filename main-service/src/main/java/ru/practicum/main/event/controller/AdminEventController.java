@@ -10,16 +10,17 @@ import ru.practicum.main.event.dto.UpdateEventDto;
 import ru.practicum.main.event.eventEnums.State;
 import ru.practicum.main.event.service.admin.AdminEventService;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@RestControllerAdvice
-@RequestMapping("/admin/events")
 @Slf4j
 @Validated
+@RestControllerAdvice
+@RequestMapping("/admin/events")
 public class AdminEventController {
     private static final String DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
@@ -51,7 +52,7 @@ public class AdminEventController {
 
     @PatchMapping("/{eventId}")
     public ResponseEntity<FullEventResponseDto> updateEvent(@PathVariable @NotNull Long eventId,
-                                                            @RequestBody UpdateEventDto event) {
+                                                            @RequestBody @Valid UpdateEventDto event) {
         log.info("Update event with \nid: {} and \ndata: {}", eventId, event);
         return ResponseEntity.status(200).body(adminEventService.updateEvent(eventId, event));
     }
