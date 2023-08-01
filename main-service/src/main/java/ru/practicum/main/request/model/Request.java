@@ -3,6 +3,7 @@ package ru.practicum.main.request.model;
 import lombok.Data;
 import ru.practicum.main.event.eventEnums.State;
 import ru.practicum.main.event.model.Event;
+import ru.practicum.main.request.enums.Status;
 import ru.practicum.main.user.model.User;
 
 import javax.persistence.*;
@@ -29,5 +30,5 @@ public class Request {
 
     @Enumerated(EnumType.STRING)
     @Column(length = 50, nullable = false)
-    private State status;
+    private Status status;
 }

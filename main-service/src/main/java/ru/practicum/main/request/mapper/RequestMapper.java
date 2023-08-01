@@ -1,21 +1,20 @@
 package ru.practicum.main.request.mapper;
 
-import ru.practicum.main.event.eventEnums.State;
 import ru.practicum.main.event.model.Event;
 import ru.practicum.main.request.dto.EventRequestStatusUpdateResponseDto;
 import ru.practicum.main.request.dto.ParticipationRequestDto;
+import ru.practicum.main.request.enums.Status;
 import ru.practicum.main.request.model.Request;
 import ru.practicum.main.user.model.User;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static ru.practicum.main.event.eventEnums.State.PENDING;
-import static ru.practicum.main.event.eventEnums.State.PUBLISHED;
+import static ru.practicum.main.request.enums.Status.*;
 
 public class RequestMapper {
 
-    public static Request toRequest(User user, Event event, State status) {
+    public static Request toRequest(User user, Event event, Status status) {
         Request request = new Request();
 
         request.setCreated(LocalDateTime.now());
@@ -34,7 +33,7 @@ public class RequestMapper {
         if (event.getRequestModeration()) {
             request.setStatus(PENDING);
         } else {
-            request.setStatus(PUBLISHED);
+            request.setStatus(CONFIRMED);
         }
         return request;
     }

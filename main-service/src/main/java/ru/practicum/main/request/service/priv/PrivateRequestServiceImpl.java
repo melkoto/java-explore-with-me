@@ -18,7 +18,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static ru.practicum.main.event.eventEnums.State.*;
+import static ru.practicum.main.event.eventEnums.State.PUBLISHED;
+import static ru.practicum.main.request.enums.Status.*;
 import static ru.practicum.main.request.mapper.RequestMapper.toParticipationRequestDto;
 import static ru.practicum.main.request.mapper.RequestMapper.toRequest;
 
@@ -62,7 +63,7 @@ public class PrivateRequestServiceImpl implements PrivateRequestService {
         if (event.getRequestModeration()) {
             request.setStatus(PENDING);
         } else {
-            request.setStatus(PUBLISHED);
+            request.setStatus(CONFIRMED);
         }
 
         return toParticipationRequestDto(requestRepository.save(request));
@@ -124,7 +125,7 @@ public class PrivateRequestServiceImpl implements PrivateRequestService {
 
     private void validateParticipantLimit(Event event, Long eventId) {
         Integer participantLimit = event.getParticipantLimit();
-        Long currentParticipants = requestRepository.countByEventIdAndStatus(eventId, PUBLISHED);
+        Long currentParticipants = requestRepository.countByEventIdAndStatus(eventId, CONFIRMED);
 
         log.info("participantLimit = {}", participantLimit);
         log.info("current participants count = {}", currentParticipants);

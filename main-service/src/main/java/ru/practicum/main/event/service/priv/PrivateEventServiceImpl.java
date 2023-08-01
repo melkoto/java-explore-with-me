@@ -8,7 +8,6 @@ import ru.practicum.main.category.repository.AdminCategoryRepository;
 import ru.practicum.main.error.ConflictException;
 import ru.practicum.main.error.NotFoundException;
 import ru.practicum.main.event.dto.*;
-import ru.practicum.main.event.eventEnums.State;
 import ru.practicum.main.event.model.Event;
 import ru.practicum.main.event.model.Location;
 import ru.practicum.main.event.repository.LocationRepository;
@@ -16,6 +15,7 @@ import ru.practicum.main.event.repository.PrivateEventRepository;
 import ru.practicum.main.request.dto.EventRequestStatusUpdateRequestDto;
 import ru.practicum.main.request.dto.EventRequestStatusUpdateResponseDto;
 import ru.practicum.main.request.dto.ParticipationRequestDto;
+import ru.practicum.main.request.enums.Status;
 import ru.practicum.main.request.mapper.RequestMapper;
 import ru.practicum.main.request.model.Request;
 import ru.practicum.main.request.repository.PrivateRequestRepository;
@@ -32,6 +32,8 @@ import static ru.practicum.main.event.eventEnums.State.*;
 import static ru.practicum.main.event.mapper.EventMapper.*;
 import static ru.practicum.main.event.mapper.LocationMapper.dtoToLocation;
 import static ru.practicum.main.event.mapper.LocationMapper.locationToDto;
+import static ru.practicum.main.request.enums.Status.CONFIRMED;
+import static ru.practicum.main.request.enums.Status.REJECTED;
 import static ru.practicum.main.request.mapper.RequestMapper.toEventRequestStatusUpdateResult;
 
 @Service
@@ -148,16 +150,21 @@ public class PrivateEventServiceImpl implements PrivateEventService {
         Event event = eventRepository.findById(eventId).orElseThrow(() ->
                 new NotFoundException(String.format("Event with id = %d not found.", eventId)));
 
+        long confirmedRequests = requestRepository.countByEventAndStatus(event, Status.CONFIRMED);
         List<Request> requests = requestRepository.findAllByIdInAndEventId(requestDto.getRequestIds(), eventId);
+        Map<Status, List<ParticipationRequestDto>> requestsByStatus = getRequestsByStatus(requests);
+
+        log.info("Confirmed requests: {}", confirmedRequests);
+        log.info("Event capacity: {}", event.getParticipantLimit());
+        log.info("Requests before update by status: {}, size: {}", requests, requests.size());
 
         requests = updateRequestStatus(requests, event, requestDto);
 
-        Map<State, List<ParticipationRequestDto>> requestsByStatus = getRequestsByStatus(requests);
-
+        log.info("Requests after update by status: {}, size: {}", requests, requests.size());
         log.info("Event request status updated. Event id = {}, user id = {}, status = {}", eventId, userId,
                 requestDto.getStatus());
 
-        return toEventRequestStatusUpdateResult(requestsByStatus.get(PUBLISHED), requestsByStatus.get(REJECTED));
+        return toEventRequestStatusUpdateResult(requestsByStatus.get(CONFIRMED), requestsByStatus.get(REJECTED));
     }
 
     @Override
@@ -167,7 +174,7 @@ public class PrivateEventServiceImpl implements PrivateEventService {
         Event event = eventRepository.findByInitiatorIdAndId(userId, eventId).orElseThrow(() ->
                 new NotFoundException(String.format("Event with id = %d not found.", eventId)));
 
-        List<Request> requests = requestRepository.findAllByEventAndStatus(event, PENDING);
+        List<Request> requests = requestRepository.findAllByEventAndStatus(event, Status.PENDING);
 
         return requests.stream()
                 .map(RequestMapper::toParticipationRequestDto)
@@ -190,12 +197,14 @@ public class PrivateEventServiceImpl implements PrivateEventService {
     }
 
     private boolean shouldUpdateStatus(Request request, Event event) {
-        return !request.getStatus().equals(PUBLISHED) &&
+        // Нужна ли пре-модерация заявок на участие. Если true, то все заявки будут ожидать подтверждения инициатором
+        // события. Если false - то будут подтверждаться автоматически
+        return !request.getStatus().equals(CONFIRMED) &&
                 (event.getParticipantLimit() > 0 || event.getRequestModeration()) &&
                 request.getStatus().equals(REJECTED);
     }
 
-    private Map<State, List<ParticipationRequestDto>> getRequestsByStatus(List<Request> requests) {
+    private Map<Status, List<ParticipationRequestDto>> getRequestsByStatus(List<Request> requests) {
         return requests.stream()
                 .collect(Collectors.groupingBy(Request::getStatus,
                         Collectors.mapping(RequestMapper::toParticipationRequestDto, Collectors.toList())));
