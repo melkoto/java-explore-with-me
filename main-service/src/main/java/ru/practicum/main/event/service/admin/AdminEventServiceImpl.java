@@ -7,7 +7,6 @@ import ru.practicum.client.StatsClient;
 import ru.practicum.main.error.ConflictException;
 import ru.practicum.main.event.dto.FullEventResponseDto;
 import ru.practicum.main.event.dto.LocationDto;
-import ru.practicum.main.event.dto.ShortEventResponseDto;
 import ru.practicum.main.event.dto.UpdateEventDto;
 import ru.practicum.main.event.eventEnums.State;
 import ru.practicum.main.event.mapper.EventMapper;
@@ -51,45 +50,8 @@ public class AdminEventServiceImpl implements AdminEventService {
                 .map(event -> EventMapper.toEventFullDto(event, null, 0))
                 .collect(Collectors.toList());
 
-        return eventViews(events);
-    }
-
-    @Override
-    public FullEventResponseDto updateEvent(Long eventId, UpdateEventDto eventDto) {
-        Event eventEntity = eventRepository.findById(eventId).orElseThrow(() ->
-                new ConflictException("Событие с id " + eventId + " не найдено."));
-
-        log.info("Event entity: {}", eventEntity);
-
-        if (eventDto.getEventDate() != null &&
-                !eventEntity.getPublishedOn().isBefore(eventDto.getEventDate().minusHours(1))) {
-            throw new ConflictException("Дата начала изменяемого события должна быть " +
-                    "не ранее чем за час от даты публикации.");
-        }
-
-        if (eventDto.getStateAction().equals(PUBLISH_EVENT) && !eventEntity.getState().equals(PENDING)) {
-            throw new ConflictException("Событие можно публиковать, только если оно в состоянии ожидания публикации");
-        }
-
-        if (eventDto.getStateAction().equals(REJECT_EVENT) && eventEntity.getState().equals(PUBLISHED)) {
-            throw new ConflictException("Событие можно отклонить, только если оно еще не опубликовано");
-        }
-
-        FullEventResponseDto fullEventResponseDto = eventViews(List.of(toEventDto(eventRepository.save(
-
-                updateDtoToEvent(eventDto, eventEntity,
-                        eventDto.getLocation() == null
-                                ? eventEntity.getLocation()
-                                : saveLocation(eventDto.getLocation())))))).get(0);
-
-        log.info("Event full response dto after update: {}", fullEventResponseDto);
-
-        return fullEventResponseDto;
-    }
-
-    private <T extends ShortEventResponseDto> List<T> eventViews(List<T> events) {
         List<String> listOfUris = events.stream()
-                .map(T::getId)
+                .map(FullEventResponseDto::getId)
                 .map(Object::toString)
                 .map(s -> "/events/" + s)
                 .collect(Collectors.toList());
@@ -104,6 +66,46 @@ public class AdminEventServiceImpl implements AdminEventService {
                     }
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public FullEventResponseDto updateEvent(Long eventId, UpdateEventDto eventDto) {
+        Event eventEntity = eventRepository.findById(eventId).orElseThrow(() ->
+                new ConflictException("Событие с id " + eventId + " не найдено."));
+
+        log.info("Event entity before update: {}", eventEntity);
+
+        if (eventEntity.getState().equals(PUBLISHED)) {
+            throw new ConflictException("Can not update published event.");
+        }
+
+        log.info("Event entity: {}", eventEntity);
+
+        if (eventDto.getEventDate() != null &&
+                !eventEntity.getPublishedOn().isBefore(eventDto.getEventDate().minusHours(1))) {
+            // translate line below to english
+            throw new ConflictException("Date of event must be at least one hour after publication");
+        }
+
+        if (eventDto.getStateAction().equals(PUBLISH_EVENT) && !eventEntity.getState().equals(PENDING)) {
+            throw new ConflictException("Event can be published only if it is in pending state");
+        }
+
+        if (eventDto.getStateAction().equals(REJECT_EVENT) && eventEntity.getState().equals(PUBLISHED)) {
+            throw new ConflictException("Event can not be rejected if it is in published state");
+        }
+
+        eventEntity.setState(PUBLISHED);
+
+        FullEventResponseDto fullEventResponseDto = toEventDto(eventRepository.save(
+                updateDtoToEvent(eventDto, eventEntity,
+                        eventDto.getLocation() == null
+                                ? eventEntity.getLocation()
+                                : saveLocation(eventDto.getLocation()))));
+
+        log.info("Event full response dto after update: {}", fullEventResponseDto);
+
+        return fullEventResponseDto;
     }
 
     private Location saveLocation(LocationDto locationDto) {

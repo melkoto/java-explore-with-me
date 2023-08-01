@@ -8,6 +8,7 @@ import ru.practicum.main.category.repository.AdminCategoryRepository;
 import ru.practicum.main.error.ConflictException;
 import ru.practicum.main.error.NotFoundException;
 import ru.practicum.main.event.dto.*;
+import ru.practicum.main.event.eventEnums.State;
 import ru.practicum.main.event.model.Event;
 import ru.practicum.main.event.model.Location;
 import ru.practicum.main.event.repository.LocationRepository;
@@ -24,6 +25,7 @@ import ru.practicum.main.user.repository.AdminUserRepository;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static ru.practicum.main.event.eventEnums.State.*;
@@ -54,9 +56,7 @@ public class PrivateEventServiceImpl implements PrivateEventService {
 
     @Override
     public List<ShortEventResponseDto> getEvents(Long userId, Integer from, Integer size) {
-        if (!userRepository.existsById(userId)) {
-            throw new NotFoundException("User with id " + userId + " not found");
-        }
+        validateUser(userId);
 
         // TODO add confirmed requests and views
         List<ShortEventResponseDto> events = eventRepository.findAllByInitiatorId(userId, PageRequest.of(from, size))
@@ -84,30 +84,25 @@ public class PrivateEventServiceImpl implements PrivateEventService {
 
     @Override
     public FullEventResponseDto addEvent(CreateEventDto createEventDto, Long userId) {
-        if (!userRepository.existsById(userId)) {
-            throw new NotFoundException("User with id " + userId + " not found");
-        }
+        validateUser(userId);
 
         if (createEventDto.getEventDate().minusHours(2).isBefore(LocalDateTime.now())) {
-            throw new ConflictException("Дата и время на которые намечено событие не может быть раньше, " +
-                    "чем через два часа от текущего момента");
+            throw new ConflictException("The event date and time should not be less than two hours from the current moment");
         }
 
         User user = userRepository
                 .findById(userId)
                 .orElseThrow(() -> new NotFoundException("User with id " + userId + " not found"));
 
-        return toEventFullDto(eventRepository
+        return toEventDto(eventRepository
                 .save(createDtoToEvent(
                         createEventDto, saveLocation(
-                                createEventDto.getLocation()), user)), 0L, 0);
+                                createEventDto.getLocation()), user)));
     }
 
     @Override
     public FullEventResponseDto getEvent(Long userId, Long eventId) {
-        if (!userRepository.existsById(userId)) {
-            throw new NotFoundException("User with id " + userId + " not found");
-        }
+        validateUser(userId);
 
         return toEventDto(
                 eventRepository.findByIdAndInitiatorId(eventId, userId).orElseThrow());
@@ -115,14 +110,16 @@ public class PrivateEventServiceImpl implements PrivateEventService {
 
     @Override
     public FullEventResponseDto updateEvent(UpdateEventUserRequestDto updateEventUserRequestDto, Long userId, Long eventId) {
-        if (!userRepository.existsById(userId)) {
-            throw new NotFoundException("User with id " + userId + " not found");
-        }
+        validateUser(userId);
 
-        Event event = eventRepository.findById(eventId).orElseThrow(() ->
+        Event event = eventRepository.findByInitiatorIdAndId(userId, eventId).orElseThrow(() ->
                 new NotFoundException("Event with id " + eventId + " not found"));
 
         log.info("Event in private: {}", event);
+
+        if (event.getState().equals(PUBLISHED)) {
+            throw new ConflictException("Published events cannot be modified");
+        }
 
         if (!event.getState().equals(CANCELED) && !event.getState().equals(PENDING)) {
             throw new ConflictException("Only cancelled events or events in moderation can be modified");
@@ -132,66 +129,77 @@ public class PrivateEventServiceImpl implements PrivateEventService {
             throw new ConflictException("The event date and time should not be less than two hours from the current moment");
         }
 
-        return toEventDto(eventRepository.save(
+        FullEventResponseDto eventDto = toEventDto(eventRepository.save(
                 updateDtoToEvent(updateEventUserRequestDto, event,
                         saveLocation(updateEventUserRequestDto.getLocation() == null
                                 ? locationToDto(event.getLocation())
                                 : updateEventUserRequestDto.getLocation()))));
+
+        log.info("Event in private after update: {}", eventDto);
+
+        return eventDto;
     }
 
     @Override
     public EventRequestStatusUpdateResponseDto updateEventRequest(
             EventRequestStatusUpdateRequestDto requestDto, Long userId, Long eventId) {
-        userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(String.format("User with id = %d not found.", userId)));
+        validateUser(userId);
 
-        // Check if event exists and retrieve it
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException(String.format("Event with id = %d not found.", eventId)));
+        Event event = eventRepository.findById(eventId).orElseThrow(() ->
+                new NotFoundException(String.format("Event with id = %d not found.", eventId)));
 
-        // Retrieve the related requests
         List<Request> requests = requestRepository.findAllByIdInAndEventId(requestDto.getRequestIds(), eventId);
 
-        for (Request request : requests) {
-            // Skip to next request if the request is already confirmed or event does not require moderation
-            if (request.getStatus().equals(PUBLISHED) ||
-                    !(event.getParticipantLimit() > 0 || event.getRequestModeration())) continue;
+        requests = updateRequestStatus(requests, event, requestDto);
 
-            // Update request status based on the new request
-            if (requestDto.getStatus().equals(REJECTED) || requestDto.getStatus().equals(PUBLISHED)) {
-                request.setStatus(requestDto.getStatus());
-            }
+        Map<State, List<ParticipationRequestDto>> requestsByStatus = getRequestsByStatus(requests);
 
-            // Persist changes
-            requestRepository.save(request);
-        }
+        log.info("Event request status updated. Event id = {}, user id = {}, status = {}", eventId, userId,
+                requestDto.getStatus());
 
-        // Filter requests by status
-        List<ParticipationRequestDto> confirmed = requests
-                .stream()
-                .filter(request -> request.getStatus().equals(PUBLISHED))
-                .map(RequestMapper::toParticipationRequestDto)
-                .collect(Collectors.toList());
-
-        List<ParticipationRequestDto> rejected = requests
-                .stream()
-                .filter(request -> request.getStatus().equals(REJECTED))
-                .map(RequestMapper::toParticipationRequestDto)
-                .collect(Collectors.toList());
-
-        // Log information
-        log.info("Event request status updated. Event id = {}, user id = {}, status = {}",
-                eventId, userId, requestDto.getStatus());
-
-        return toEventRequestStatusUpdateResult(confirmed, rejected);
-
+        return toEventRequestStatusUpdateResult(requestsByStatus.get(PUBLISHED), requestsByStatus.get(REJECTED));
     }
 
     @Override
-    public ParticipationRequestDto getEventRequest(Long userId, Long eventId) {
-        return null;
+    public List<ParticipationRequestDto> getEventRequests(Long userId, Long eventId) {
+        validateUser(userId);
+
+        Event event = eventRepository.findByInitiatorIdAndId(userId, eventId).orElseThrow(() ->
+                new NotFoundException(String.format("Event with id = %d not found.", eventId)));
+
+        List<Request> requests = requestRepository.findAllByEventAndStatus(event, PENDING);
+
+        return requests.stream()
+                .map(RequestMapper::toParticipationRequestDto)
+                .collect(Collectors.toList());
     }
 
+    private void validateUser(Long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new NotFoundException("User with id " + userId + " not found");
+        }
+    }
+
+    private List<Request> updateRequestStatus(List<Request> requests, Event event,
+                                              EventRequestStatusUpdateRequestDto requestDto) {
+        return requests.stream()
+                .filter(request -> shouldUpdateStatus(request, event))
+                .peek(request -> request.setStatus(requestDto.getStatus()))
+                .map(requestRepository::save)
+                .collect(Collectors.toList());
+    }
+
+    private boolean shouldUpdateStatus(Request request, Event event) {
+        return !request.getStatus().equals(PUBLISHED) &&
+                (event.getParticipantLimit() > 0 || event.getRequestModeration()) &&
+                request.getStatus().equals(REJECTED);
+    }
+
+    private Map<State, List<ParticipationRequestDto>> getRequestsByStatus(List<Request> requests) {
+        return requests.stream()
+                .collect(Collectors.groupingBy(Request::getStatus,
+                        Collectors.mapping(RequestMapper::toParticipationRequestDto, Collectors.toList())));
+    }
 
     private Location saveLocation(LocationDto locationDto) {
         if (!locationRepository.existsByLatAndLon(locationDto.getLat(), locationDto.getLon())) {

@@ -27,4 +27,8 @@ public interface PrivateRequestRepository extends JpaRepository<Request, Long> {
 
     )
     List<Request> getUserEventRequests(Long userId, Long eventId);
+
+    List<Request> findAllByEventAndStatus(Event event, State status);
+
+    List<Request> findAllByIdInAndEvent(List<Long> requestIds, Event event);
 }

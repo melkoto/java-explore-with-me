@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import ru.practicum.main.error.BadRequestException;
 import ru.practicum.main.error.ConflictException;
 import ru.practicum.main.error.NotFoundException;
+import ru.practicum.main.event.eventEnums.State;
 import ru.practicum.main.event.model.Event;
 import ru.practicum.main.event.repository.PrivateEventRepository;
 import ru.practicum.main.request.dto.ParticipationRequestDto;
@@ -18,8 +19,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static ru.practicum.main.event.eventEnums.State.CANCELED;
-import static ru.practicum.main.event.eventEnums.State.PUBLISHED;
+import static ru.practicum.main.event.eventEnums.State.*;
 import static ru.practicum.main.request.mapper.RequestMapper.toParticipationRequestDto;
 import static ru.practicum.main.request.mapper.RequestMapper.toRequest;
 
@@ -56,13 +56,15 @@ public class PrivateRequestServiceImpl implements PrivateRequestService {
         log.info("createRequest event = {}", event);
         log.info("createRequest user = {}", user);
 
-        if (!event.getRequestModeration()) {
-            request.setStatus(PUBLISHED);
-        }
-
         validateEventConstraints(event, userId);
         validateParticipantLimit(event, eventId);
         validateRepeatRequest(user, event);
+
+        if (event.getRequestModeration()) {
+            request.setStatus(PENDING);
+        } else {
+            request.setStatus(PUBLISHED);
+        }
 
         return toParticipationRequestDto(requestRepository.save(request));
     }
@@ -97,16 +99,18 @@ public class PrivateRequestServiceImpl implements PrivateRequestService {
 
     private void validateEventConstraints(Event event, Long userId) {
 
-        log.info("event.getInitiator().getId() = {}", event.getInitiator().getId());
-        log.info("userId = {}", userId);
-        log.info("event.getState() = {}", event.getState());
+        Long initiatorId = event.getInitiator().getId();
+        State state = event.getState();
 
-        if (Objects.equals(event.getInitiator().getId(), userId) || event.getState() != PUBLISHED) {
-            throw new BadRequestException("User with id=" + userId + " can't participate in event with id="
-                    + event.getId() + " because he is initiator or event is not published. " +
-                    "Event state = " + event.getState() + ". " +
-                    "User id = " + userId + ". " +
-                    "Event initiator id = " + event.getInitiator().getId());
+        log.info("event.getInitiator().getId() = {}", initiatorId);
+        log.info("userId = {}", userId);
+        log.info("event.getState() = {}", state);
+
+        if (Objects.equals(initiatorId, userId) || state != PUBLISHED) {
+            throw new ConflictException(String.format("User with id=%d can't participate in event with id=%d "
+                            + "because he is the initiator or event is not published. "
+                            + "Event state = %s. User id = %d. Event initiator id = %d",
+                    userId, event.getId(), state, userId, initiatorId));
         }
     }
 
@@ -119,18 +123,17 @@ public class PrivateRequestServiceImpl implements PrivateRequestService {
         }
     }
 
-
     private void validateParticipantLimit(Event event, Long eventId) {
         Integer participantLimit = event.getParticipantLimit();
+        Long currentParticipants = requestRepository.countByEventIdAndStatus(eventId, PUBLISHED);
 
         log.info("participantLimit = {}", participantLimit);
-        log.info("requestRepository.countByEventIdAndStatus(eventId, PUBLISHED) = {}",
-                requestRepository.countByEventIdAndStatus(eventId, PUBLISHED));
+        log.info("current participants count = {}", currentParticipants);
 
-        if (participantLimit > 0 && participantLimit <= requestRepository.countByEventIdAndStatus(eventId, PUBLISHED)) {
-            throw new BadRequestException("Event with id=" + eventId + " has reached participant limit. " +
+        if (participantLimit > 0 && participantLimit <= currentParticipants) {
+            throw new ConflictException("Event with id=" + eventId + " has reached participant limit. " +
                     "Participant limit = " + participantLimit + ". " +
-                    "Current participants count = " + requestRepository.countByEventIdAndStatus(eventId, PUBLISHED) + ".");
+                    "Current participants count = " + currentParticipants + ".");
         }
     }
 }

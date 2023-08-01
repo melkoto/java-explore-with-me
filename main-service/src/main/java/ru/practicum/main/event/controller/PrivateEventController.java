@@ -16,9 +16,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
 
+@Slf4j
 @RestControllerAdvice
 @RequestMapping("/users/{userId}/events")
-@Slf4j
 public class PrivateEventController {
     private final PrivateEventService privateEventService;
 
@@ -65,13 +65,12 @@ public class PrivateEventController {
         return ResponseEntity.status(200).body(privateEventService.updateEvent(updateEventUserRequestDto, userId, eventId));
     }
 
-    // TODO add when requests ready
     @GetMapping("{eventId}/requests")
-    public ResponseEntity<ParticipationRequestDto> getEventRequest(@PathVariable("userId") Long userId,
-                                                                   @PathVariable("eventId") Long eventId) {
+    public ResponseEntity<List<ParticipationRequestDto>> getEventRequests(@PathVariable("userId") Long userId,
+                                                                          @PathVariable("eventId") Long eventId) {
         log.info("\nGet event request with id: {}" +
                 "\nfor user with id: {}", eventId, userId);
-        return ResponseEntity.status(200).body(privateEventService.getEventRequest(userId, eventId));
+        return ResponseEntity.status(200).body(privateEventService.getEventRequests(userId, eventId));
     }
 
     @PatchMapping("{eventId}/requests")
