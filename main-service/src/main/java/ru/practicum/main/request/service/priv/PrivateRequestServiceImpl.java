@@ -2,7 +2,6 @@ package ru.practicum.main.request.service.priv;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.practicum.main.error.BadRequestException;
 import ru.practicum.main.error.ConflictException;
 import ru.practicum.main.error.NotFoundException;
 import ru.practicum.main.event.eventEnums.State;
