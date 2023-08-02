@@ -22,7 +22,7 @@ import static ru.practicum.main.user.mapper.UserMapper.userToUserResponseDto;
 
 @Data
 public class EventMapper {
-    private static Event shortEventResponseDtoToEvent(ShortEventResponseDto shortEventResponseDto) {
+    public static Event shortEventResponseDtoToEvent(ShortEventResponseDto shortEventResponseDto) {
         Event event = new Event();
         event.setId(shortEventResponseDto.getId());
         event.setTitle(shortEventResponseDto.getTitle());
@@ -102,6 +102,7 @@ public class EventMapper {
         eventDto.setCreatedOn(LocalDateTime.now());
         eventDto.setLocation(locationToDto(event.getLocation()));
         eventDto.setRequestModeration(event.getRequestModeration());
+        eventDto.setViews(0L);
         return eventDto;
     }
 

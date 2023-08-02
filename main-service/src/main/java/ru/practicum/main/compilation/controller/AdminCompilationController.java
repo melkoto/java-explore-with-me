@@ -29,10 +29,10 @@ public class AdminCompilationController {
     }
 
     @DeleteMapping("/{compId}")
-    public ResponseEntity<Void> deleteCompilation(@PathVariable("compId") Long compId) {
+    public ResponseEntity<CompilationResponseDto> deleteCompilation(@PathVariable("compId") Long compId) {
         log.info("deleteCompilation: compId={}", compId);
-        adminCompilationService.deleteCompilation(compId);
-        return ResponseEntity.noContent().build();
+
+        return ResponseEntity.status(204).body(adminCompilationService.deleteCompilation(compId));
     }
 
     @PatchMapping("/{compId}")

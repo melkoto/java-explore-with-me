@@ -170,12 +170,13 @@ public class PrivateEventServiceImpl implements PrivateEventService {
 
         Event event = eventRepository.getReferenceById(eventId);
 
-        if (!event.getRequestModeration() || event.getParticipantLimit().equals(0)) {
-            return new EventRequestStatusUpdateResponseDto();
-        }
+        Integer participantLimit = eventRepository.findById(eventId).orElseThrow().getParticipantLimit();
+        Integer acceptedRequestCount = requestRepository.countByEventIdAndStatus(eventId, CONFIRMED);
 
-        if (event.getParticipantLimit() != 0 && event.getParticipantLimit() <= requestRepository.countByEventId(eventId)) {
-            throw new ConflictException("Event with id=" + eventId + " has reached the limit of participants");
+        if (participantLimit < acceptedRequestCount + statusUpdateRequest.getRequestIds().size()) {
+            throw new ConflictException("The number of participants cannot exceed the limit. " +
+                    "The limit is " + participantLimit + " participants. " +
+                    "The number of confirmed requests is " + acceptedRequestCount + " participants.");
         }
 
         List<ParticipationRequestDto> confirmedRequests = new ArrayList<>();
@@ -212,7 +213,6 @@ public class PrivateEventServiceImpl implements PrivateEventService {
 
     private void processRejectedRequest(Request request, List<ParticipationRequestDto> rejectedRequests) {
         if (CONFIRMED.equals(request.getStatus())) {
-            log.warn("Already confirmed request cannot be rejected!");
             throw new ConflictException("Already confirmed request cannot be rejected");
         }
 
@@ -230,7 +230,6 @@ public class PrivateEventServiceImpl implements PrivateEventService {
             requestRepository.save(request);
         } else {
             if (!Status.PENDING.equals(request.getStatus())) {
-                log.warn("Only requests with PENDING status can be confirmed!");
                 throw new ConflictException("Request must have status PENDING");
             }
 

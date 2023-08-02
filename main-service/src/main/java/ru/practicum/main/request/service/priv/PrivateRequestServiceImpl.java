@@ -52,7 +52,9 @@ public class PrivateRequestServiceImpl implements PrivateRequestService {
 
         Request request = requestRepository.findByRequesterIdAndEventId(userId, eventId);
 
-        Integer counted = requestRepository.countByEventId(eventId);
+        Integer counted = requestRepository.countByEventIdAndStatus(eventId, CONFIRMED);
+
+        log.info("Counted = {}", counted);
 
         if (event.getParticipantLimit() != null && event.getParticipantLimit() != 0 &&
                 event.getParticipantLimit() <= counted) {

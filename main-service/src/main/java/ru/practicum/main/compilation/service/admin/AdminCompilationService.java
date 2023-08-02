@@ -9,5 +9,5 @@ public interface AdminCompilationService {
 
     public CompilationResponseDto updateCompilation(Long compilationId, UpdateCompilationDto updateCompilationRequest);
 
-    public void deleteCompilation(long id);
+    public CompilationResponseDto deleteCompilation(long id);
 }

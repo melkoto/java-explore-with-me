@@ -15,7 +15,7 @@ public interface PrivateRequestRepository extends JpaRepository<Request, Long> {
 
     Optional<Request> findByIdAndRequesterId(Long requestId, Long userId);
 
-    Long countByEventIdAndStatus(Long eventId, Status status);
+    Integer countByEventIdAndStatus(Long eventId, Status status);
 
     boolean existsByRequesterAndEvent(User user, Event event);
 
@@ -37,4 +37,6 @@ public interface PrivateRequestRepository extends JpaRepository<Request, Long> {
     Request findByRequesterIdAndEventId(Long userId, Long eventId);
 
     Integer countByEventId(Long eventId);
+
+    List<Request> findByEvent(Event event);
 }

@@ -16,6 +16,7 @@ import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Validated
@@ -32,7 +33,7 @@ public class AdminEventController {
 
     @GetMapping
     public ResponseEntity<List<FullEventResponseDto>> getEvents(
-            @RequestParam(name = "users", required = false) List<Long> users,
+            @RequestParam(name = "users", required = false) Set<Long> users,
             @RequestParam(name = "states", required = false) List<State> states,
             @RequestParam(name = "categories", required = false) List<Integer> categories,
             @RequestParam(name = "rangeStart", required = false)

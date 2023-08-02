@@ -46,6 +46,7 @@ public class AdminCompilationServiceImpl implements AdminCompilationService {
 
         log.info("Updating compilation = {} with id = {}", compilation, compilationId);
 
+        compilationRepository.save(compilation);
         CompilationResponseDto compilationResponseDto = toCompilationResponseDto(compilation);
 
         log.info("Compilation updated successfully. New compilation = {}", compilationResponseDto);
@@ -54,10 +55,13 @@ public class AdminCompilationServiceImpl implements AdminCompilationService {
     }
 
     @Override
-    public void deleteCompilation(long id) {
+    public CompilationResponseDto deleteCompilation(long id) {
         Compilation compilation = findCompilationById(id);
+
         compilationRepository.deleteById(id);
-        log.info("Compilation with id = {} deleted successfully", id);
+        log.info("Compilation: {} with id = {} deleted successfully", compilation, id);
+
+        return toCompilationResponseDto(compilation);
     }
 
     private Compilation findCompilationById(Long compilationId) {

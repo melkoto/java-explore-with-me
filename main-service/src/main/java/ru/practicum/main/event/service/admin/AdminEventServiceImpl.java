@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static ru.practicum.main.event.eventEnums.State.PENDING;
@@ -42,9 +43,10 @@ public class AdminEventServiceImpl implements AdminEventService {
         this.locationRepository = locationRepository;
     }
 
-    public List<FullEventResponseDto> getEvents(List<Long> users, List<State> states, List<Integer> categories,
+    public List<FullEventResponseDto> getEvents(Set<Long> users, List<State> states, List<Integer> categories,
                                                 LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                                 Integer from, Integer size) {
+
         List<FullEventResponseDto> events = eventRepository.getEventsFiltered(
                         users, states, categories, rangeStart, rangeEnd, PageRequest.of(from, size))
                 .stream()
@@ -59,7 +61,7 @@ public class AdminEventServiceImpl implements AdminEventService {
 
         Object bodyWithViews = statsClient.getAllStats(listOfUris).getBody();
 
-        return events.stream()
+        List<FullEventResponseDto> collect = events.stream()
                 .peek(event -> {
                     if (bodyWithViews instanceof LinkedHashMap) {
                         event.setViews(Long.parseLong(((LinkedHashMap<?, ?>) bodyWithViews).get(event.getId()
@@ -67,6 +69,10 @@ public class AdminEventServiceImpl implements AdminEventService {
                     }
                 })
                 .collect(Collectors.toList());
+
+        log.info("Events: {}", collect);
+
+        return events;
     }
 
     @Override
@@ -87,14 +93,12 @@ public class AdminEventServiceImpl implements AdminEventService {
         if (eventDto.getStateAction() != null && eventDto.getStateAction().equals(StateAction.PUBLISH_EVENT)) {
             LocalDateTime now = LocalDateTime.now();
 
-            if (eventDto.getEventDate() != null &&
-                    !now.isBefore(eventDto.getEventDate().minusHours(1))) {
+            if (eventDto.getEventDate() != null && !now.isBefore(eventDto.getEventDate().minusHours(1))) {
                 throw new ConflictException("Publication date must be at least 1 hour before event date.");
             }
 
             event.setState(PUBLISHED);
             event.setPublishedOn(now);
-            event.setRequestModeration(true);
         } else if (eventDto.getStateAction() != null && eventDto.getStateAction().equals(StateAction.REJECT_EVENT)) {
             event.setState(State.CANCELED);
         }
