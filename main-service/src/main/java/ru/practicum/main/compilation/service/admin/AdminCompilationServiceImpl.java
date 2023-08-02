@@ -11,6 +11,7 @@ import ru.practicum.main.error.NotFoundException;
 import ru.practicum.main.event.model.Event;
 import ru.practicum.main.event.repository.AdminEventRepository;
 
+import java.util.Collections;
 import java.util.Set;
 
 import static ru.practicum.main.compilation.mapper.CompilationMapper.toCompilation;
@@ -30,12 +31,10 @@ public class AdminCompilationServiceImpl implements AdminCompilationService {
 
     @Override
     public CompilationResponseDto createCompilation(CreateCompilationDto newCompilationDto) {
-        Set<Event> events = eventRepository.findAllByIdIn(newCompilationDto.getEvents());
-
+        Set<Long> eventIds = newCompilationDto.getEvents() == null ? Collections.emptySet() : newCompilationDto.getEvents();
+        Set<Event> events = eventRepository.findAllByIdIn(eventIds);
         Compilation newCompilation = toCompilation(newCompilationDto, events);
-
         Compilation savedCompilation = compilationRepository.save(newCompilation);
-
         return toCompilationResponseDto(savedCompilation);
     }
 

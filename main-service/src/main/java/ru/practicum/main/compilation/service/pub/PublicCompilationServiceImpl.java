@@ -23,7 +23,7 @@ public class PublicCompilationServiceImpl implements PublicCompilationService {
 
 
     @Override
-    public List<CompilationResponseDto> getCompilations(int offset, int limit, boolean isPinned) {
+    public List<CompilationResponseDto> getCompilations(int offset, int limit, Boolean isPinned) {
         Pageable pageRequest = Pageable.ofSize(limit).withPage(offset);
 
         List<Compilation> compilations = isPinned ? compilationRepository.findAllByPinnedIsTrue(pageRequest).getContent()

@@ -16,7 +16,7 @@ public class CompilationMapper {
         return new CompilationResponseDto(
                 compilation.getEvents(),
                 compilation.getId(),
-                compilation.getPinned(),
+                compilation.getPinned() == null ? false : compilation.getPinned(),
                 compilation.getTitle());
     }
 

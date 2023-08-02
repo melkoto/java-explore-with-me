@@ -24,9 +24,9 @@ public class PublicCompilationController {
 
     @GetMapping
     public ResponseEntity<List<CompilationResponseDto>> getCompilations(
-            @RequestParam(value = "pinned") Boolean pinned,
-            @PositiveOrZero @RequestParam(name = "from", defaultValue = "0") Integer from,
-            @Positive @RequestParam(name = "size", defaultValue = "10") Integer size) {
+            @RequestParam(value = "pinned", required = false, defaultValue = "false") Boolean pinned,
+            @PositiveOrZero @RequestParam(name = "from", defaultValue = "0", required = false) Integer from,
+            @Positive @RequestParam(name = "size", defaultValue = "10", required = false) Integer size) {
 
         log.info("Get compilations with: \npinned={}, \nfrom={}, \nsize={}", pinned, from, size);
 
