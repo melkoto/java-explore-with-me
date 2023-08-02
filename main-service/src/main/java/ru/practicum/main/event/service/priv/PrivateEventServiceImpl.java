@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.client.StatsClient;
+import ru.practicum.main.error.BadRequestException;
 import ru.practicum.main.error.ConflictException;
 import ru.practicum.main.error.NotFoundException;
 import ru.practicum.main.event.dto.*;
@@ -125,6 +126,11 @@ public class PrivateEventServiceImpl implements PrivateEventService {
                 new NotFoundException("Event with id " + eventId + " not found"));
 
         log.info("Event in private: {}", event);
+
+        // TODO maybe delete this check
+        if (updateEventUserRequestDto.getEventDate().isBefore(event.getEventDate())) {
+            throw new BadRequestException("The event date and time should not be less than the current one");
+        }
 
         if (event.getState().equals(PUBLISHED)) {
             throw new ConflictException("Published events cannot be modified");
