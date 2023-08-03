@@ -40,8 +40,8 @@ public class AdminEventController {
             @DateTimeFormat(pattern = DATE_TIME_FORMAT) LocalDateTime rangeStart,
             @RequestParam(name = "rangeEnd", required = false, defaultValue = "3100-01-01 00:00:00")
             @DateTimeFormat(pattern = DATE_TIME_FORMAT) LocalDateTime rangeEnd,
-            @PositiveOrZero @RequestParam(name = "from", defaultValue = "0") Integer from,
-            @Positive @RequestParam(name = "size", defaultValue = "10") Integer size) {
+            @PositiveOrZero @RequestParam(name = "from", defaultValue = "0", required = false) Integer from,
+            @Positive @RequestParam(name = "size", defaultValue = "10", required = false) Integer size) {
 
         log.info("Get events with \nusers: {}, \nstates: {}, \ncategories: {}, \nrangeStart: {}, \nrangeEnd: {}, " +
                 "\nfrom: {}, \nsize: {}", users, states, categories, rangeStart, rangeEnd, from, size);
