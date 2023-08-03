@@ -28,8 +28,10 @@ public class PrivateEventController {
 
     @GetMapping
     public ResponseEntity<List<ShortEventResponseDto>> getEvents(@PathVariable Long userId,
-                                                                 @RequestParam(value = "from", defaultValue = "0") Integer from,
-                                                                 @RequestParam(value = "size", defaultValue = "10") Integer size) {
+                                                                 @RequestParam(value = "from", defaultValue = "0",
+                                                                         required = false) Integer from,
+                                                                 @RequestParam(value = "size", defaultValue = "10",
+                                                                         required = false) Integer size) {
         log.info("\nGet events for user with id: {}," +
                 "\nfrom: {}," +
                 "\nsize: {}", userId, from, size);
