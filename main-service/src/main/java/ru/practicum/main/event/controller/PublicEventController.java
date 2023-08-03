@@ -39,8 +39,8 @@ public class PublicEventController {
             @DateTimeFormat(pattern = DATE_TIME_FORMAT) LocalDateTime rangeEnd,
             @RequestParam(defaultValue = "false") Boolean onlyAvailable,
             @RequestParam(required = false, defaultValue = "EVENT_DATE") SortTypes sortType,
-            @PositiveOrZero @RequestParam(defaultValue = "0") int from,
-            @Positive @RequestParam(defaultValue = "10") int size, HttpServletRequest request) {
+            @PositiveOrZero @RequestParam(defaultValue = "0", required = false) int from,
+            @Positive @RequestParam(defaultValue = "10", required = false) int size, HttpServletRequest request) {
 
         log.info("Get events with \ntext: {}, \ncategories: {}, \npaid: {}, \nrangeStart: {}, \nrangeEnd: {}, " +
                         "\nonlyAvailable: {}, \nsort: {}, \nfrom: {}, \nsize: {}",
