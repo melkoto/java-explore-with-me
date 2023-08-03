@@ -6,6 +6,7 @@ spring:
         format_sql: 'true'
     hibernate:
       ddl-auto: create-drop
+    show-sql: 'true'
   datasource:
     driverClassName: org.postgresql.Driver
     username: postgres
@@ -23,8 +24,13 @@ logging:
             JpaTransactionManager: DEBUG
             nodeValue: INFO
         transaction:
-          interceptor: TRACE
+          interceptor: DEBUG
           nodeValue: INFO
+    hibernate:
+      SQL: DEBUG
+
+stats-server:
+  url: http://localhost:9090
 
 server:
-  port: 9090
+  port: 8080
