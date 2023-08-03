@@ -27,8 +27,8 @@ public class AdminUserController {
     @GetMapping
     public ResponseEntity<List<UserResponseDto>> getUsers(
             @RequestParam(name = "ids", required = false) List<Long> ids,
-            @PositiveOrZero @RequestParam(name = "from", defaultValue = "0") Integer from,
-            @Positive @RequestParam(name = "size", defaultValue = "10") Integer size) {
+            @PositiveOrZero @RequestParam(name = "from", defaultValue = "0", required = false) Integer from,
+            @Positive @RequestParam(name = "size", defaultValue = "10", required = false) Integer size) {
 
         log.info("Get users with ids: {} from: {} to: {} with size of: {}", ids, from, from + size, size);
 
