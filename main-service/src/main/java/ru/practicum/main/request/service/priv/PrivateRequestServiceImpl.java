@@ -68,7 +68,9 @@ public class PrivateRequestServiceImpl implements PrivateRequestService {
         Request updatedRequest = (request == null) ? new Request() : request;
         Request result = toRequest(updatedRequest, user, event);
 
-        if (event.getRequestModeration()) {
+        if (event.getParticipantLimit() == 0) {
+            result.setStatus(CONFIRMED);
+        } else if (event.getRequestModeration()) {
             result.setStatus(PENDING);
         } else {
             result.setStatus(CONFIRMED);

@@ -10,6 +10,8 @@ import ru.practicum.main.error.ConflictException;
 import ru.practicum.main.error.NotFoundException;
 import ru.practicum.main.event.repository.PublicEventRepository;
 
+import java.util.Optional;
+
 import static ru.practicum.main.category.mapper.CategoryMapper.mapCategoryDtoToCategory;
 import static ru.practicum.main.category.mapper.CategoryMapper.mapCategoryToCategoryResponseDto;
 
@@ -54,20 +56,24 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
 
     @Override
     public CategoryResponseDto updateCategory(CategoryDto categoryDto, int catId) {
-        if (checkIfNotExist(catId)) {
-            throw new NotFoundException("Category with id: " + catId + " doesn't exist");
+        Optional<Category> category = adminCategoryRepository.findByName(categoryDto.getName());
+
+        // TODO tests conflict
+        if (category.isPresent()) {
+            if (category.get().getName().equals(categoryDto.getName())) {
+                log.info("++++++++++++++++++++++++++ {}", categoryDto.getName());
+//                throw new ConflictException("Category name: " + categoryDto.getName() + " already exists in the system.");
+                return mapCategoryToCategoryResponseDto(category.get());
+            } else {
+                log.info("------------------ {}", categoryDto.getName());
+                throw new ConflictException("Category name: " + categoryDto.getName() + " already exists in the system.");
+            }
         }
 
-        if (adminCategoryRepository.findByName(categoryDto.getName()).isPresent()) {
-            throw new ConflictException("Category with name: " + categoryDto.getName() + " already exist");
-//            return mapCategoryToCategoryResponseDto(adminCategoryRepository.findByName(categoryDto.getName()).get());
-        }
+        Category savedCategory = adminCategoryRepository.save(mapCategoryDtoToCategory(categoryDto));
+        log.info("Category: {}, with id: {} was updated", savedCategory, catId);
 
-        Category category = adminCategoryRepository.save(mapCategoryDtoToCategory(categoryDto));
-
-        log.info("Category: {}, with id: {} was updated", category, catId);
-
-        return mapCategoryToCategoryResponseDto(category);
+        return mapCategoryToCategoryResponseDto(savedCategory);
     }
 
     private boolean checkIfNotExist(int catId) {

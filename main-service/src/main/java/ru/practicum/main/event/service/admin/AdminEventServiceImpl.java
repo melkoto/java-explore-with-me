@@ -17,7 +17,6 @@ import ru.practicum.main.event.repository.AdminEventRepository;
 import ru.practicum.main.event.repository.LocationRepository;
 
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -47,32 +46,32 @@ public class AdminEventServiceImpl implements AdminEventService {
                                                 LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                                 Integer from, Integer size) {
 
-        List<FullEventResponseDto> events = eventRepository.getEventsFiltered(
+        return eventRepository.getEventsByAdmin(
                         users, states, categories, rangeStart, rangeEnd, PageRequest.of(from, size))
                 .stream()
                 .map(event -> EventMapper.toEventFullDto(event, event.getViews(), event.getConfirmedRequests()))
                 .collect(Collectors.toList());
 
-        List<String> listOfUris = events.stream()
-                .map(FullEventResponseDto::getId)
-                .map(Object::toString)
-                .map(s -> "/events/" + s)
-                .collect(Collectors.toList());
+//        List<String> listOfUris = events.stream()
+//                .map(FullEventResponseDto::getId)
+//                .map(Object::toString)
+//                .map(s -> "/events/" + s)
+//                .collect(Collectors.toList());
+//
+//        Object bodyWithViews = statsClient.getAllStats(listOfUris).getBody();
+//
+//        List<FullEventResponseDto> collect = events.stream()
+//                .peek(event -> {
+//                    if (bodyWithViews instanceof LinkedHashMap) {
+//                        event.setViews(Long.parseLong(((LinkedHashMap<?, ?>) bodyWithViews).get(event.getId()
+//                                .toString()).toString()));
+//                    }
+//                })
+//                .collect(Collectors.toList());
+//
+//        log.info("Events: {}", collect);
 
-        Object bodyWithViews = statsClient.getAllStats(listOfUris).getBody();
-
-        List<FullEventResponseDto> collect = events.stream()
-                .peek(event -> {
-                    if (bodyWithViews instanceof LinkedHashMap) {
-                        event.setViews(Long.parseLong(((LinkedHashMap<?, ?>) bodyWithViews).get(event.getId()
-                                .toString()).toString()));
-                    }
-                })
-                .collect(Collectors.toList());
-
-        log.info("Events: {}", collect);
-
-        return events;
+//        return events;
     }
 
     @Override

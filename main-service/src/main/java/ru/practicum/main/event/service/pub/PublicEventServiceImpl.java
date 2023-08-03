@@ -17,6 +17,7 @@ import ru.practicum.main.event.mapper.EventMapper;
 import ru.practicum.main.event.model.Event;
 import ru.practicum.main.event.repository.PublicEventRepository;
 import ru.practicum.main.request.repository.PrivateRequestRepository;
+import ru.practicum.main.utils.EventUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
@@ -36,13 +37,15 @@ public class PublicEventServiceImpl implements PublicEventService {
     private final AdminCategoryRepository categoryRepository;
     private final PrivateRequestRepository requestRepository;
     private final PublicEventRepository eventRepository;
+    private final EventUtils eventUtils;
 
-    public PublicEventServiceImpl(StatsClient statsClient, PublicEventRepository publicEventRepository, AdminCategoryRepository categoryRepository, PrivateRequestRepository requestRepository, PublicEventRepository eventRepository) {
+    public PublicEventServiceImpl(StatsClient statsClient, PublicEventRepository publicEventRepository, AdminCategoryRepository categoryRepository, PrivateRequestRepository requestRepository, PublicEventRepository eventRepository, EventUtils eventUtils) {
         this.statsClient = statsClient;
         this.publicEventRepository = publicEventRepository;
         this.categoryRepository = categoryRepository;
         this.requestRepository = requestRepository;
         this.eventRepository = eventRepository;
+        this.eventUtils = eventUtils;
     }
 
     public List<ShortEventResponseDto> getEvents(String text, List<Integer> categories, Boolean paid, String rangeStart,
@@ -67,9 +70,10 @@ public class PublicEventServiceImpl implements PublicEventService {
                 sort = Sort.by(Sort.Direction.DESC, "views");
                 break;
             case EVENT_DATE:
-            default:
                 sort = Sort.by(Sort.Direction.ASC, "eventDate");
                 break;
+            default:
+                throw new BadRequestException("sortType must be VIEWS or EVENT_DATE");
         }
 
         Pageable pageable = PageRequest.of(from / size, size, sort);
@@ -78,16 +82,16 @@ public class PublicEventServiceImpl implements PublicEventService {
         if (sortType == SortTypes.VIEWS) {
             events = publicEventRepository.findAllEventsOrderByViews(text, categories, paid, start, end, pageable);
             log.info("VIEW Page<Event>: {}", events);
-        } else if (sortType == SortTypes.EVENT_DATE) {
+        } else {
             events = publicEventRepository.findAllEventsOrderByEventDate(text, categories, paid, start, end, pageable);
             log.info("EVENT_DATE Page<Event>: {}", events);
         }
 
         log.info("events for public: {}", events);
 
-        return events.getContent().stream()
+        return eventUtils.fillViewsForListAndReturn(events.getContent().stream()
                 .map(event -> EventMapper.toEventShortDto(event, event.getConfirmedRequests(), event.getViews()))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
     }
 
     public FullEventResponseDto getEvent(long eventId, HttpServletRequest request) {
@@ -102,6 +106,7 @@ public class PublicEventServiceImpl implements PublicEventService {
 
         log.info("event: {}", event);
 
-        return toEventFullDto(event, event.getViews(), event.getConfirmedRequests());
+        return eventUtils.setViewsOfEventAndReturn(toEventFullDto(event, event.getViews(),
+                event.getConfirmedRequests()));
     }
 }
