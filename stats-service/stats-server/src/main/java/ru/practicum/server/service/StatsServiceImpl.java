@@ -1,7 +1,9 @@
 package ru.practicum.server.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import ru.practicum.dto.RequestDto;
 import ru.practicum.dto.ResponseDto;
 import ru.practicum.dto.ResponseShortDto;
@@ -31,7 +33,13 @@ public class StatsServiceImpl implements StatsService {
 
     @Override
     public List<ResponseDto> stats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
-        log.info("Retrieving stats list with parameters: start = {}, end = {}, uris = {}, unique = {}", start, end, uris, unique);
+        log.info("Retrieving stats list with parameters: start = {}, end = {}, uris = {}, unique = {}",
+                start, end, uris, unique);
+
+        if (end.isBefore(start)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "End time cannot be before start time");
+        }
+
         return getStatsBasedOnParams(start, end, uris, unique);
     }
 

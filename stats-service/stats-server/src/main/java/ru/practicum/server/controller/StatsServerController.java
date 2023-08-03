@@ -1,5 +1,6 @@
 package ru.practicum.server.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 public class StatsServerController {
     private final StatsService statsService;
@@ -24,8 +26,9 @@ public class StatsServerController {
     }
 
     @PostMapping("/hit")
-    public void hit(@Valid @RequestBody RequestDto requestDto) {
+    public ResponseEntity<Void> hit(@Valid @RequestBody RequestDto requestDto) {
         statsService.hit(requestDto);
+        return ResponseEntity.status(201).build();
     }
 
     @GetMapping("/stats")

@@ -4,8 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import ru.practicum.dto.RequestDto;
 
@@ -23,10 +25,12 @@ import java.util.stream.Collectors;
 public class StatsClient extends BaseClient {
 
     @Autowired
-    public StatsClient(@Value("http://localhost:9090") String serverUrl, RestTemplateBuilder builder) {
-        super(builder
-                .uriTemplateHandler(new DefaultUriBuilderFactory(serverUrl))
-                .build());
+    public StatsClient(@Value("${stats-server.url}") String serverUrl, RestTemplateBuilder builder) {
+        super(
+                builder
+                        .uriTemplateHandler(new DefaultUriBuilderFactory(serverUrl))
+                        .build()
+        );
     }
 
     public ResponseEntity<Object> saveHit(String app, String uri, String ip, LocalDateTime time) {
@@ -37,7 +41,7 @@ public class StatsClient extends BaseClient {
     public ResponseEntity<Object> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
         log.info("Getting stats for start: {}, end: {}, uris: {}, unique: {}", start, end, uris, unique);
 
-        validateTimespan(start, end);
+        validateTime(start, end);
         String endpoint = buildStatsEndpoint(uris, unique);
         Map<String, Object> parameters = buildParameterMap(encode(start), encode(end));
 
@@ -53,11 +57,11 @@ public class StatsClient extends BaseClient {
         return get("/stats/hits?" + urisString, null);
     }
 
-    private void validateTimespan(LocalDateTime start, LocalDateTime end) {
+    private void validateTime(LocalDateTime start, LocalDateTime end) {
         log.info("Validating time for start: {}, end: {}", start, end);
 
         if (start == null || end == null || start.isAfter(end)) {
-            throw new IllegalArgumentException("Invalid time: start: " + start + ", end: " + end);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid time: start: " + start + ", end: " + end);
         }
     }
 
