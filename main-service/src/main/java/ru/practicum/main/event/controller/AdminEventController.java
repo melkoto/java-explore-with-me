@@ -44,7 +44,7 @@ public class AdminEventController {
             @Positive @RequestParam(name = "size", defaultValue = "10", required = false) Integer size) {
 
         log.info("Get events with \nusers: {}, \nstates: {}, \ncategories: {}, \nrangeStart: {}, \nrangeEnd: {}, " +
-                "\nfrom: {}, \nsize: {}", users, states, categories, rangeStart, rangeEnd, from, size);
+                "\nfrom: {}, \nsize: {}.", users, states, categories, rangeStart, rangeEnd, from, size);
 
         return ResponseEntity
                 .status(200)
