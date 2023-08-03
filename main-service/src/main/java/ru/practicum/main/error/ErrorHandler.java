@@ -1,6 +1,8 @@
 package ru.practicum.main.error;
 
 import lombok.extern.slf4j.Slf4j;
+import org.postgresql.util.PSQLException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -31,10 +33,13 @@ public class ErrorHandler {
         return new ResponseEntity<>(errorResponse, NOT_FOUND);
     }
 
-    @ExceptionHandler(DatabaseConnectionException.class)
-    public ResponseEntity<ErrorResponse> catchDatabaseConnectionException(final DatabaseConnectionException e) {
+    @ExceptionHandler
+    public ResponseEntity<ErrorResponse> catchPSQLException(final PSQLException e) {
         log.error(e.getMessage(), e);
-        ErrorResponse errorResponse = new ErrorResponse(INTERNAL_SERVER_ERROR.value(), e.getMessage());
-        return new ResponseEntity<>(errorResponse, INTERNAL_SERVER_ERROR);
+        HttpStatus httpStatus = CONFLICT;
+        if (e.getMessage().contains("null value in column \"email\"")) {
+            httpStatus = BAD_REQUEST;
+        }
+        return new ResponseEntity<>(new ErrorResponse(httpStatus.value(), e.getMessage()), httpStatus);
     }
 }

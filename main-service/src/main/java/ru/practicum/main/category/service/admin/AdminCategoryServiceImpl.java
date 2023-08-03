@@ -12,8 +12,6 @@ import ru.practicum.main.event.repository.PublicEventRepository;
 
 import javax.transaction.Transactional;
 
-import java.util.Optional;
-
 import static ru.practicum.main.category.mapper.CategoryMapper.*;
 
 @Service
@@ -57,39 +55,16 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
 
     @Transactional
     @Override
-    public CategoryResponseDto updateCategory(CategoryDto categoryDto, Integer catId) {
-        Optional<Category> category = adminCategoryRepository.findByName(categoryDto.getName());
-
-        // TODO tests conflict
-        if (category.isPresent()) {
-            if (category.get().getName().equals(categoryDto.getName())) {
-                log.info("++++++++++++++++++++++++++ {}", categoryDto.getName());
-                throw new ConflictException("Category name: " + categoryDto.getName() + " already exists in the system.");
-//                return mapCategoryToCategoryResponseDto(category.get());
-            } else {
-                log.info("------------------ {}", categoryDto.getName());
-                throw new ConflictException("Category name: " + categoryDto.getName() + " already exists in the system.");
-            }
-        }
-
-        Category savedCategory = adminCategoryRepository.save(mapCategoryDtoToCategory(categoryDto));
-        log.info("Category: {}, with id: {} was updated", savedCategory, catId);
-
-        return mapCategoryToCategoryResponseDto(savedCategory);
+    public CategoryResponseDto updateCategory(CategoryDto newCategoryDto, Integer catId) {
+        return mapCategoryToCategoryResponseDto(
+                adminCategoryRepository.save(
+                        mapToCategory(
+                                newCategoryDto,
+                                adminCategoryRepository.findById(catId).orElseThrow()
+                        )
+                )
+        );
     }
-
-//    @Transactional
-//    @Override
-//    public CategoryResponseDto updateCategory(CategoryDto newCategoryDto, Integer catId) {
-//        return mapCategoryToCategoryResponseDto(
-//                adminCategoryRepository.save(
-//                        mapToCategory(
-//                                newCategoryDto,
-//                                adminCategoryRepository.findById(catId).orElseThrow()
-//                        )
-//                )
-//        );
-//    }
 
     private boolean checkIfNotExist(int catId) {
         return !adminCategoryRepository.existsById(catId);

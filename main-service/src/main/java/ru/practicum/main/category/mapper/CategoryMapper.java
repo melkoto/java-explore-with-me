@@ -24,4 +24,9 @@ public class CategoryMapper {
         category.setName(categoryResponseDto.getName());
         return category;
     }
+
+    public static Category mapToCategory(CategoryDto newCategoryDto, Category category) {
+        category.setName(newCategoryDto.getName());
+        return category;
+    }
 }
