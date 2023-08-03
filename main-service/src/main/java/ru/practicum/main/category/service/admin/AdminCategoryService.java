@@ -8,5 +8,5 @@ public interface AdminCategoryService {
 
     void deleteCategory(int catId);
 
-    CategoryResponseDto updateCategory(CategoryDto categoryDto, int catId);
+    CategoryResponseDto updateCategory(CategoryDto categoryDto, Integer catId);
 }

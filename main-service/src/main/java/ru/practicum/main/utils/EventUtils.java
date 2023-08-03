@@ -18,7 +18,7 @@ public class EventUtils {
     }
 
 
-    public <T extends ShortEventResponseDto> List<T> fillViewsForListAndReturn(List<T> events) {
+    public <T extends ShortEventResponseDto> List<T> fillViews(List<T> events) {
         List<String> listOfUris = events.stream()
                 .map(T::getId)
                 .map(Object::toString)
@@ -41,7 +41,7 @@ public class EventUtils {
                 .collect(Collectors.toList());
     }
 
-    public <T extends ShortEventResponseDto> T setViewsOfEventAndReturn(T event) {
+    public <T extends ShortEventResponseDto> T setViews(T event) {
         Object bodyWithViews = statClient.getAllStats(List.of("/events/" + event.getId())).getBody();
         Object views;
         if (bodyWithViews instanceof LinkedHashMap && event.getId() != null) {

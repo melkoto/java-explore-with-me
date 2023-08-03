@@ -1,7 +1,7 @@
 package ru.practicum.main.event.mapper;
 
 import lombok.Data;
-import ru.practicum.main.category.model.Category;
+import ru.practicum.main.error.BadRequestException;
 import ru.practicum.main.event.dto.CreateEventDto;
 import ru.practicum.main.event.dto.FullEventResponseDto;
 import ru.practicum.main.event.dto.ShortEventResponseDto;
@@ -15,43 +15,11 @@ import java.time.LocalDateTime;
 
 import static ru.practicum.main.category.mapper.CategoryMapper.mapCategoryResponseDtoToCategory;
 import static ru.practicum.main.category.mapper.CategoryMapper.mapCategoryToCategoryResponseDto;
-import static ru.practicum.main.event.mapper.LocationMapper.dtoToLocation;
 import static ru.practicum.main.event.mapper.LocationMapper.locationToDto;
-import static ru.practicum.main.user.mapper.UserMapper.userResponseDtoToUser;
 import static ru.practicum.main.user.mapper.UserMapper.userToUserResponseDto;
 
 @Data
 public class EventMapper {
-    public static Event shortEventResponseDtoToEvent(ShortEventResponseDto shortEventResponseDto) {
-        Event event = new Event();
-        event.setId(shortEventResponseDto.getId());
-        event.setTitle(shortEventResponseDto.getTitle());
-        event.setAnnotation(shortEventResponseDto.getAnnotation());
-        event.setCategory(mapCategoryResponseDtoToCategory(shortEventResponseDto.getCategory()));
-        event.setPaid(shortEventResponseDto.isPaid());
-        event.setEventDate(shortEventResponseDto.getEventDate());
-        event.setInitiator(userResponseDtoToUser(shortEventResponseDto.getInitiator()));
-        return event;
-    }
-
-    public static Event toEvent(CreateEventDto createEventDto, User user, Category category) {
-        Event event = new Event();
-        event.setAnnotation(createEventDto.getAnnotation());
-        event.setCategory(category);
-        event.setCreatedOn(LocalDateTime.now());
-        event.setDescription(createEventDto.getDescription());
-        event.setEventDate((createEventDto.getEventDate()));
-        event.setInitiator(user);
-        event.setLocation(dtoToLocation(createEventDto.getLocation()));
-        event.setPaid(createEventDto.getPaid());
-        event.setParticipantLimit(createEventDto.getParticipantLimit());
-        event.setPublishedOn(null);
-        event.setRequestModeration(createEventDto.getRequestModeration());
-        event.setState(State.PENDING);
-        event.setTitle(createEventDto.getTitle());
-        return event;
-    }
-
     public static <T extends UpdateEventDto> Event updateDtoToEvent(T updateDto, Event event,
                                                                     Location location) {
         if (updateDto.getAnnotation() != null) {
@@ -59,6 +27,9 @@ public class EventMapper {
         }
 
         if (updateDto.getEventDate() != null) {
+            if (updateDto.getEventDate().isBefore(event.getEventDate())) {
+                throw new BadRequestException("Event date cannot be changed to earlier date");
+            }
             event.setEventDate(updateDto.getEventDate());
         }
 
@@ -159,16 +130,21 @@ public class EventMapper {
     }
 
     public static ShortEventResponseDto toEventShortDto(Event event, Integer confirmedRequests, Long views) {
+        ShortEventResponseDto shortEventResponseDto = toEventShortDto(event);
+        shortEventResponseDto.setConfirmedRequests(confirmedRequests);
+        shortEventResponseDto.setViews(views);
+        return shortEventResponseDto;
+    }
+
+    public static ShortEventResponseDto toEventShortDto(Event event) {
         ShortEventResponseDto shortEventResponseDto = new ShortEventResponseDto();
         shortEventResponseDto.setId(event.getId());
         shortEventResponseDto.setTitle(event.getTitle());
         shortEventResponseDto.setAnnotation(event.getAnnotation());
         shortEventResponseDto.setCategory(mapCategoryToCategoryResponseDto(event.getCategory()));
         shortEventResponseDto.setPaid(event.getPaid());
-        shortEventResponseDto.setConfirmedRequests(confirmedRequests);
         shortEventResponseDto.setEventDate(event.getEventDate());
         shortEventResponseDto.setInitiator(userToUserResponseDto(event.getInitiator()));
-        shortEventResponseDto.setViews(views);
         return shortEventResponseDto;
     }
 }

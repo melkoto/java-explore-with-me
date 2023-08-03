@@ -3,10 +3,10 @@ package ru.practicum.main.event.service.admin;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import ru.practicum.client.StatsClient;
 import ru.practicum.main.error.ConflictException;
 import ru.practicum.main.event.dto.FullEventResponseDto;
 import ru.practicum.main.event.dto.LocationDto;
+import ru.practicum.main.event.dto.ShortEventResponseDto;
 import ru.practicum.main.event.dto.UpdateEventDto;
 import ru.practicum.main.event.eventEnums.State;
 import ru.practicum.main.event.eventEnums.StateAction;
@@ -15,6 +15,8 @@ import ru.practicum.main.event.model.Event;
 import ru.practicum.main.event.model.Location;
 import ru.practicum.main.event.repository.AdminEventRepository;
 import ru.practicum.main.event.repository.LocationRepository;
+import ru.practicum.main.request.repository.PrivateRequestRepository;
+import ru.practicum.main.utils.EventUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,50 +30,37 @@ import static ru.practicum.main.event.eventEnums.StateAction.PUBLISH_EVENT;
 import static ru.practicum.main.event.mapper.EventMapper.toEventDto;
 import static ru.practicum.main.event.mapper.EventMapper.updateDtoToEvent;
 import static ru.practicum.main.event.mapper.LocationMapper.dtoToLocation;
+import static ru.practicum.main.request.enums.Status.CONFIRMED;
 
 @Service
 @Slf4j
 public class AdminEventServiceImpl implements AdminEventService {
-    private final StatsClient statsClient;
     private final AdminEventRepository eventRepository;
     private final LocationRepository locationRepository;
+    private final EventUtils eventUtils;
+    private final PrivateRequestRepository requestRepository;
 
-    public AdminEventServiceImpl(StatsClient statsClient, AdminEventRepository eventRepository, LocationRepository locationRepository) {
-        this.statsClient = statsClient;
+    public AdminEventServiceImpl(AdminEventRepository eventRepository, LocationRepository locationRepository, EventUtils eventUtils, PrivateRequestRepository requestRepository) {
         this.eventRepository = eventRepository;
         this.locationRepository = locationRepository;
+        this.eventUtils = eventUtils;
+        this.requestRepository = requestRepository;
     }
 
     public List<FullEventResponseDto> getEvents(Set<Long> users, List<State> states, List<Integer> categories,
                                                 LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                                 Integer from, Integer size) {
 
-        return eventRepository.getEventsByAdmin(
+        List<FullEventResponseDto> events = eventRepository.getFilteredEvents(
                         users, states, categories, rangeStart, rangeEnd, PageRequest.of(from, size))
                 .stream()
-                .map(event -> EventMapper.toEventFullDto(event, event.getViews(), event.getConfirmedRequests()))
+                .map(EventMapper::toEventDto)
+                .map(this::setConfirmedRequests)
                 .collect(Collectors.toList());
 
-//        List<String> listOfUris = events.stream()
-//                .map(FullEventResponseDto::getId)
-//                .map(Object::toString)
-//                .map(s -> "/events/" + s)
-//                .collect(Collectors.toList());
-//
-//        Object bodyWithViews = statsClient.getAllStats(listOfUris).getBody();
-//
-//        List<FullEventResponseDto> collect = events.stream()
-//                .peek(event -> {
-//                    if (bodyWithViews instanceof LinkedHashMap) {
-//                        event.setViews(Long.parseLong(((LinkedHashMap<?, ?>) bodyWithViews).get(event.getId()
-//                                .toString()).toString()));
-//                    }
-//                })
-//                .collect(Collectors.toList());
-//
-//        log.info("Events: {}", collect);
+        log.info("Events after filtering: {}", events);
 
-//        return events;
+        return eventUtils.fillViews(events);
     }
 
     @Override
@@ -85,8 +74,10 @@ public class AdminEventServiceImpl implements AdminEventService {
             throw new ConflictException("Can not update published event.");
         }
 
-        if (eventDto.getStateAction() != null && eventDto.getStateAction().equals(PUBLISH_EVENT) && !event.getState().equals(PENDING)) {
-            throw new ConflictException("Event can be published only if it is in pending state");
+        if (eventDto.getStateAction() != null &&
+                eventDto.getStateAction().equals(PUBLISH_EVENT) &&
+                !event.getState().equals(PENDING)) {
+            throw new ConflictException("Event can be published only if it is in PENDING state");
         }
 
         if (eventDto.getStateAction() != null && eventDto.getStateAction().equals(StateAction.PUBLISH_EVENT)) {
@@ -110,7 +101,7 @@ public class AdminEventServiceImpl implements AdminEventService {
             event.setDescription(eventDto.getDescription());
         }
 
-        event.setEventDate(Objects.requireNonNullElse(eventDto.getEventDate(), event.getEventDate()));
+//        event.setEventDate(Objects.requireNonNullElse(eventDto.getEventDate(), event.getEventDate()));
         event.setPaid(Objects.requireNonNullElse(eventDto.getPaid(), event.getPaid()));
         event.setParticipantLimit(Objects.requireNonNullElse(eventDto.getParticipantLimit(), event.getParticipantLimit()));
 
@@ -134,5 +125,12 @@ public class AdminEventServiceImpl implements AdminEventService {
             return locationRepository.save(dtoToLocation(locationDto));
         }
         return locationRepository.findByLatAndLon(locationDto.getLat(), locationDto.getLon());
+    }
+
+    private <T extends ShortEventResponseDto> T setConfirmedRequests(T event) {
+        event.setConfirmedRequests(
+                requestRepository.countByEventIdAndStatus(event.getId(), CONFIRMED)
+        );
+        return event;
     }
 }

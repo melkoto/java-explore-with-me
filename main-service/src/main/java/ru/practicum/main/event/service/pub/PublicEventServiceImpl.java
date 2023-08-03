@@ -1,13 +1,11 @@
 package ru.practicum.main.event.service.pub;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.client.StatsClient;
-import ru.practicum.main.category.repository.AdminCategoryRepository;
 import ru.practicum.main.error.BadRequestException;
 import ru.practicum.main.error.NotFoundException;
 import ru.practicum.main.event.dto.FullEventResponseDto;
@@ -21,76 +19,59 @@ import ru.practicum.main.utils.EventUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static ru.practicum.main.event.eventEnums.State.PUBLISHED;
 import static ru.practicum.main.event.mapper.EventMapper.toEventFullDto;
+import static ru.practicum.main.request.enums.Status.CONFIRMED;
 
 @Service
 @Slf4j
 public class PublicEventServiceImpl implements PublicEventService {
-    private static final String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
     private final StatsClient statsClient;
     private final PublicEventRepository publicEventRepository;
-    private final AdminCategoryRepository categoryRepository;
     private final PrivateRequestRepository requestRepository;
     private final PublicEventRepository eventRepository;
     private final EventUtils eventUtils;
 
-    public PublicEventServiceImpl(StatsClient statsClient, PublicEventRepository publicEventRepository, AdminCategoryRepository categoryRepository, PrivateRequestRepository requestRepository, PublicEventRepository eventRepository, EventUtils eventUtils) {
+    public PublicEventServiceImpl(StatsClient statsClient, PublicEventRepository publicEventRepository, PrivateRequestRepository requestRepository,
+                                  PublicEventRepository eventRepository, EventUtils eventUtils) {
         this.statsClient = statsClient;
         this.publicEventRepository = publicEventRepository;
-        this.categoryRepository = categoryRepository;
         this.requestRepository = requestRepository;
         this.eventRepository = eventRepository;
         this.eventUtils = eventUtils;
     }
 
-    public List<ShortEventResponseDto> getEvents(String text, List<Integer> categories, Boolean paid, String rangeStart,
-                                                 String rangeEnd, Boolean onlyAvailable, SortTypes sortType, Integer from,
+    public List<ShortEventResponseDto> getEvents(String text, List<Integer> categories, Boolean paid, LocalDateTime rangeStart,
+                                                 LocalDateTime rangeEnd, Boolean onlyAvailable, SortTypes sortType, Integer from,
                                                  Integer size, HttpServletRequest request) {
         statsClient.saveHit("ewm-main-service", request.getRequestURI(), request.getRemoteAddr(), LocalDateTime.now());
 
-        LocalDateTime start = (rangeStart != null)
-                ? LocalDateTime.parse(rangeStart, DateTimeFormatter.ofPattern(DATE_TIME_PATTERN))
-                : LocalDateTime.now();
-        LocalDateTime end = (rangeEnd != null)
-                ? LocalDateTime.parse(rangeEnd, DateTimeFormatter.ofPattern(DATE_TIME_PATTERN))
-                : LocalDateTime.now().plusYears(100);
-
-        if (end.isBefore(start)) {
-            throw new BadRequestException("rangeEnd must be after rangeStart");
+        if (rangeStart.isAfter(rangeEnd)) {
+            throw new BadRequestException("Range start date is after range end date");
         }
 
-        Sort sort;
+        Pageable pageable;
         switch (sortType) {
             case VIEWS:
-                sort = Sort.by(Sort.Direction.DESC, "views");
+                pageable = PageRequest.of(from, size, Sort.by(Sort.Direction.DESC, "views"));
                 break;
             case EVENT_DATE:
-                sort = Sort.by(Sort.Direction.ASC, "eventDate");
+                pageable = PageRequest.of(from, size, Sort.by(Sort.Direction.DESC, "eventDate"));
                 break;
             default:
-                throw new BadRequestException("sortType must be VIEWS or EVENT_DATE");
+                throw new BadRequestException("Sort type is not supported");
         }
 
-        Pageable pageable = PageRequest.of(from / size, size, sort);
+        List<Event> events = (onlyAvailable
+                ? eventRepository.getAvailableEvents(pageable, text, categories, paid, rangeStart, rangeEnd)
+                : eventRepository.getEvents(pageable, text, categories, paid, rangeStart, rangeEnd)).toList();
 
-        Page<Event> events = null;
-        if (sortType == SortTypes.VIEWS) {
-            events = publicEventRepository.findAllEventsOrderByViews(text, categories, paid, start, end, pageable);
-            log.info("VIEW Page<Event>: {}", events);
-        } else {
-            events = publicEventRepository.findAllEventsOrderByEventDate(text, categories, paid, start, end, pageable);
-            log.info("EVENT_DATE Page<Event>: {}", events);
-        }
-
-        log.info("events for public: {}", events);
-
-        return eventUtils.fillViewsForListAndReturn(events.getContent().stream()
-                .map(event -> EventMapper.toEventShortDto(event, event.getConfirmedRequests(), event.getViews()))
+        return eventUtils.fillViews(events.stream()
+                .map(EventMapper::toEventShortDto)
+                .map(this::setConfirmedRequests)
                 .collect(Collectors.toList()));
     }
 
@@ -106,7 +87,14 @@ public class PublicEventServiceImpl implements PublicEventService {
 
         log.info("event: {}", event);
 
-        return eventUtils.setViewsOfEventAndReturn(toEventFullDto(event, event.getViews(),
+        return eventUtils.setViews(toEventFullDto(event, event.getViews(),
                 event.getConfirmedRequests()));
+    }
+
+    private <T extends ShortEventResponseDto> T setConfirmedRequests(T event) {
+        event.setConfirmedRequests(
+                requestRepository.countByEventIdAndStatus(event.getId(), CONFIRMED)
+        );
+        return event;
     }
 }

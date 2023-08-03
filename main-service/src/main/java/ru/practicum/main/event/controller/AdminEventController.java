@@ -36,9 +36,9 @@ public class AdminEventController {
             @RequestParam(name = "users", required = false) Set<Long> users,
             @RequestParam(name = "states", required = false) List<State> states,
             @RequestParam(name = "categories", required = false) List<Integer> categories,
-            @RequestParam(name = "rangeStart", required = false)
+            @RequestParam(name = "rangeStart", required = false, defaultValue = "1970-01-01 00:00:00")
             @DateTimeFormat(pattern = DATE_TIME_FORMAT) LocalDateTime rangeStart,
-            @RequestParam(name = "rangeEnd", required = false)
+            @RequestParam(name = "rangeEnd", required = false, defaultValue = "3100-01-01 00:00:00")
             @DateTimeFormat(pattern = DATE_TIME_FORMAT) LocalDateTime rangeEnd,
             @PositiveOrZero @RequestParam(name = "from", defaultValue = "0") Integer from,
             @Positive @RequestParam(name = "size", defaultValue = "10") Integer size) {

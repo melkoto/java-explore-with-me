@@ -4,14 +4,14 @@ import lombok.Data;
 
 import javax.persistence.*;
 
+@Data
 @Entity
 @Table(name = "categories")
-@Data
 public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
 
-    @Column(name = "name", length = 50, nullable = false, unique = true)
+    @Column(unique = true)
     private String name;
 }

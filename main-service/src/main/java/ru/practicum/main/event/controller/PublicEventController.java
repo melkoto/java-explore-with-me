@@ -1,6 +1,7 @@
 package ru.practicum.main.event.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,7 @@ import ru.practicum.main.event.service.pub.PublicEventService;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestControllerAdvice
@@ -19,6 +21,7 @@ import java.util.List;
 @Slf4j
 @Validated
 public class PublicEventController {
+    private static final String DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
     private final PublicEventService publicEventService;
 
     public PublicEventController(PublicEventService publicEventService) {
@@ -30,8 +33,10 @@ public class PublicEventController {
             @RequestParam(required = false) String text,
             @RequestParam(name = "categories", required = false) List<Integer> categoriesId,
             @RequestParam(required = false) Boolean paid,
-            @RequestParam(required = false) String rangeStart,
-            @RequestParam(required = false) String rangeEnd,
+            @RequestParam(required = false, defaultValue = "1970-01-01 00:00:00")
+            @DateTimeFormat(pattern = DATE_TIME_FORMAT) LocalDateTime rangeStart,
+            @RequestParam(required = false, defaultValue = "3970-01-01 00:00:00")
+            @DateTimeFormat(pattern = DATE_TIME_FORMAT) LocalDateTime rangeEnd,
             @RequestParam(defaultValue = "false") Boolean onlyAvailable,
             @RequestParam(required = false, defaultValue = "EVENT_DATE") SortTypes sortType,
             @PositiveOrZero @RequestParam(defaultValue = "0") int from,

@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.client.StatsClient;
+import ru.practicum.main.error.BadRequestException;
 import ru.practicum.main.error.ConflictException;
 import ru.practicum.main.error.NotFoundException;
 import ru.practicum.main.event.dto.*;
@@ -65,7 +66,7 @@ public class PrivateEventServiceImpl implements PrivateEventService {
         List<ShortEventResponseDto> events = eventRepository.findAllByInitiatorId(userId, PageRequest.of(from, size))
                 .stream()
                 .map(event -> toEventShortDto(event,
-                        requestRepository.countByEventIdAndStatus(event.getId(), CONFIRMED).intValue(), 0L))
+                        requestRepository.countByEventIdAndStatus(event.getId(), CONFIRMED), 0L))
                 .collect(Collectors.toList());
 
         List<String> listOfUris = events.stream()
@@ -78,7 +79,7 @@ public class PrivateEventServiceImpl implements PrivateEventService {
 
         return events.stream()
                 .peek(event -> {
-                    if (bodyWithViews != null && bodyWithViews instanceof LinkedHashMap) {
+                    if (bodyWithViews instanceof LinkedHashMap) {
                         Object view = ((LinkedHashMap<?, ?>) bodyWithViews).get(event.getId().toString());
                         if (view != null) {
                             event.setViews(Long.parseLong(view.toString()));
@@ -96,7 +97,7 @@ public class PrivateEventServiceImpl implements PrivateEventService {
         validateUser(userId);
 
         if (createEventDto.getEventDate().minusHours(2).isBefore(LocalDateTime.now())) {
-            throw new ConflictException("The event date and time should not be less than two hours from the current moment");
+            throw new BadRequestException("The event date and time should not be less than two hours from the current moment");
         }
 
         User user = userRepository
@@ -104,7 +105,7 @@ public class PrivateEventServiceImpl implements PrivateEventService {
                 .orElseThrow(() -> new NotFoundException("User with id " + userId + " not found"));
 
         Event event = createDtoToEvent(createEventDto, saveLocation(createEventDto.getLocation()), user);
-        event.setConfirmedRequests(requestRepository.countByEventIdAndStatus(event.getId(), CONFIRMED).intValue());
+        event.setConfirmedRequests(requestRepository.countByEventIdAndStatus(event.getId(), CONFIRMED));
 
         return toEventDto(eventRepository.save(event));
     }

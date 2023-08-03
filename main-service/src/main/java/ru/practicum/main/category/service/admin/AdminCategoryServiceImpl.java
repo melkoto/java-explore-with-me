@@ -10,10 +10,11 @@ import ru.practicum.main.error.ConflictException;
 import ru.practicum.main.error.NotFoundException;
 import ru.practicum.main.event.repository.PublicEventRepository;
 
+import javax.transaction.Transactional;
+
 import java.util.Optional;
 
-import static ru.practicum.main.category.mapper.CategoryMapper.mapCategoryDtoToCategory;
-import static ru.practicum.main.category.mapper.CategoryMapper.mapCategoryToCategoryResponseDto;
+import static ru.practicum.main.category.mapper.CategoryMapper.*;
 
 @Service
 @Slf4j
@@ -54,16 +55,17 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
         log.info("Category with id: {} was deleted", catId);
     }
 
+    @Transactional
     @Override
-    public CategoryResponseDto updateCategory(CategoryDto categoryDto, int catId) {
+    public CategoryResponseDto updateCategory(CategoryDto categoryDto, Integer catId) {
         Optional<Category> category = adminCategoryRepository.findByName(categoryDto.getName());
 
         // TODO tests conflict
         if (category.isPresent()) {
             if (category.get().getName().equals(categoryDto.getName())) {
                 log.info("++++++++++++++++++++++++++ {}", categoryDto.getName());
-//                throw new ConflictException("Category name: " + categoryDto.getName() + " already exists in the system.");
-                return mapCategoryToCategoryResponseDto(category.get());
+                throw new ConflictException("Category name: " + categoryDto.getName() + " already exists in the system.");
+//                return mapCategoryToCategoryResponseDto(category.get());
             } else {
                 log.info("------------------ {}", categoryDto.getName());
                 throw new ConflictException("Category name: " + categoryDto.getName() + " already exists in the system.");
@@ -75,6 +77,19 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
 
         return mapCategoryToCategoryResponseDto(savedCategory);
     }
+
+//    @Transactional
+//    @Override
+//    public CategoryResponseDto updateCategory(CategoryDto newCategoryDto, Integer catId) {
+//        return mapCategoryToCategoryResponseDto(
+//                adminCategoryRepository.save(
+//                        mapToCategory(
+//                                newCategoryDto,
+//                                adminCategoryRepository.findById(catId).orElseThrow()
+//                        )
+//                )
+//        );
+//    }
 
     private boolean checkIfNotExist(int catId) {
         return !adminCategoryRepository.existsById(catId);
