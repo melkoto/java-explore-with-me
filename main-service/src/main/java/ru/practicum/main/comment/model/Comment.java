@@ -29,6 +29,5 @@ public class Comment {
     @Column(nullable = false)
     LocalDateTime createdOn;
 
-    @Column(nullable = false)
     LocalDateTime editedOn;
 }

@@ -52,6 +52,6 @@ CREATE TABLE IF NOT EXISTS comments
     text       VARCHAR(1000) NOT NULL,
     author_id  BIGINT REFERENCES users (id) ON DELETE CASCADE,
     event_id   BIGINT REFERENCES events (id) ON DELETE CASCADE,
-    created_on TIMESTAMP     NOT NULL,
+    created_on TIMESTAMP,
     edited_on  TIMESTAMP
 );

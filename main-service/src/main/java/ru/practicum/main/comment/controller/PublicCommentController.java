@@ -23,13 +23,13 @@ public class PublicCommentController {
         this.service = service;
     }
 
-    @GetMapping
-    public ResponseEntity<List<ShortCommentResponseDto>> getEventComments(@RequestParam Long eventId,
-                                                                          @RequestParam(defaultValue = "0") Integer page,
+    @GetMapping("/events")
+    public ResponseEntity<List<ShortCommentResponseDto>> getEventComments(@RequestParam(value = "eventId") Long eventId,
+                                                                          @RequestParam(defaultValue = "0") Integer from,
                                                                           @RequestParam(defaultValue = "10") Integer size) {
 
         log.info("Get comments for event with id {}", eventId);
 
-        return ResponseEntity.status(200).body(service.getEventComments(eventId, page, size));
+        return ResponseEntity.status(200).body(service.getEventComments(eventId, from, size));
     }
 }

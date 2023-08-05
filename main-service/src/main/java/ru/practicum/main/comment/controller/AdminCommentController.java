@@ -22,7 +22,7 @@ public class AdminCommentController {
         this.service = service;
     }
 
-    @GetMapping("/{userId}")
+    @GetMapping("/users/{userId}")
     public ResponseEntity<List<FullCommentResponseDto>> getUserComments(
             @PathVariable("userId") Long userId,
             @PositiveOrZero @RequestParam(defaultValue = "0", required = false) int from,
@@ -33,7 +33,7 @@ public class AdminCommentController {
         return ResponseEntity.status(200).body(service.getUserComments(userId, from, size));
     }
 
-    @GetMapping("/{eventId}")
+    @GetMapping("/events/{eventId}")
     public ResponseEntity<List<FullCommentResponseDto>> getEventComments(
             @PathVariable("eventId") Long eventId,
             @PositiveOrZero @RequestParam(defaultValue = "0", required = false) int from,
@@ -41,7 +41,7 @@ public class AdminCommentController {
 
         log.info("Get comments for event with id {}", eventId);
 
-        return ResponseEntity.status(200).body(null);
+        return ResponseEntity.status(200).body(service.getEventComments(eventId, from, size));
     }
 
     @DeleteMapping("/{commentId}")

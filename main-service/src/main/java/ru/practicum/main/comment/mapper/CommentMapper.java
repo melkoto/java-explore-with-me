@@ -32,17 +32,17 @@ public class CommentMapper {
 
     public static ShortCommentResponseDto mapToShortCommentResponseDto(Comment comment) {
         ShortCommentResponseDto shortCommentResponseDto = new ShortCommentResponseDto();
+        shortCommentResponseDto.setId(comment.getId());
         shortCommentResponseDto.setText(comment.getText());
         shortCommentResponseDto.setAuthor(userToUserResponseDto(comment.getAuthor()));
         shortCommentResponseDto.setEvent(toEventShortDto(comment.getEvent()));
-        shortCommentResponseDto.setCreatedOn(comment.getCreatedOn());
-        shortCommentResponseDto.setEditedOn(comment.getEditedOn());
 
         return shortCommentResponseDto;
     }
 
     public static FullCommentResponseDto mapToFullCommentResponseDto(Comment comment) {
         FullCommentResponseDto fullCommentResponseDto = new FullCommentResponseDto();
+        fullCommentResponseDto.setId(comment.getId());
         fullCommentResponseDto.setText(comment.getText());
         fullCommentResponseDto.setAuthor(userToUserResponseDto(comment.getAuthor()));
         fullCommentResponseDto.setEvent(toEventShortDto(comment.getEvent()));

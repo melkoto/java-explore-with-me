@@ -22,19 +22,20 @@ public class PrivateCommentController {
     }
 
     @PostMapping
-    public ResponseEntity<ShortCommentResponseDto> addComment(@Valid CreateCommentDto dto,
+    public ResponseEntity<ShortCommentResponseDto> addComment(@Valid @RequestBody CreateCommentDto dto,
                                                               @PathVariable("userId") Long userId,
-                                                              @RequestParam Long eventId) {
+                                                              @RequestParam(value = "eventId", required = false) Long eventId) {
 
-        log.info("addComment: {}, userId: {}", dto, userId);
+        log.info("Request DTO: {}, userId: {}, eventId: {}", dto, userId, eventId);
 
         return ResponseEntity.status(201).body(service.addComment(dto, userId, eventId));
     }
 
     @PatchMapping("/{commentId}")
-    public ResponseEntity<ShortCommentResponseDto> updateComment(@Valid CreateCommentDto dto,
+    public ResponseEntity<ShortCommentResponseDto> updateComment(@Valid @RequestBody CreateCommentDto dto,
                                                                  @PathVariable("commentId") Long commentId,
                                                                  @PathVariable String userId) {
+
         log.info("updateComment: {}, commentId: {}, userId: {}", dto, commentId, userId);
 
         return ResponseEntity.status(200).body(service.updateComment(dto, commentId, userId));
