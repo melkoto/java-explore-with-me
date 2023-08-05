@@ -10,6 +10,8 @@ import javax.validation.constraints.PositiveOrZero;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 
+import static ru.practicum.main.utils.Constants.DATE_TIME_FORMAT;
+
 @Data
 public class CreateEventDto {
     @NotEmpty
@@ -24,7 +26,7 @@ public class CreateEventDto {
     private String description;
 
     @NotNull
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = DATE_TIME_FORMAT)
     private LocalDateTime eventDate;
 
     @NotNull

@@ -18,13 +18,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
+import static ru.practicum.main.utils.Constants.DATE_TIME_FORMAT;
+
 @Slf4j
 @Validated
 @RestControllerAdvice
 @RequestMapping("/admin/events")
 public class AdminEventController {
-    private static final String DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
-
     private final AdminEventService adminEventService;
 
     public AdminEventController(AdminEventService adminEventService) {
