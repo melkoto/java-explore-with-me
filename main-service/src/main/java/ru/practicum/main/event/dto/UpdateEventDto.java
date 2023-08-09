@@ -8,6 +8,8 @@ import ru.practicum.main.event.eventEnums.StateAction;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 
+import static ru.practicum.main.utils.Constants.DATE_TIME_FORMAT;
+
 @Data
 public class UpdateEventDto {
     @Size(min = 20, max = 2000, message = "Annotation must be between 20 and 2000 characters")
@@ -18,8 +20,8 @@ public class UpdateEventDto {
     @Size(min = 20, max = 7000, message = "Description must be between 20 and 7000 characters")
     private String description;
 
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern = DATE_TIME_FORMAT)
+    @JsonFormat(pattern = DATE_TIME_FORMAT)
     private LocalDateTime eventDate;
 
     private LocationDto location;

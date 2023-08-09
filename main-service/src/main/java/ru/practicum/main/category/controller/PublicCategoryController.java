@@ -21,9 +21,12 @@ public class PublicCategoryController {
 
 
     @GetMapping
-    public ResponseEntity<List<CategoryResponseDto>> getCategories(@RequestParam(value = "from", defaultValue = "0") Integer from,
-                                                                   @RequestParam(value = "size", defaultValue = "10") Integer size) {
+    public ResponseEntity<List<CategoryResponseDto>> getCategories(
+            @RequestParam(value = "from", defaultValue = "0") Integer from,
+            @RequestParam(value = "size", defaultValue = "10") Integer size) {
+
         log.info("Get categories from: {}, size: {}", from, size);
+
         return ResponseEntity.status(200).body(publicCategoryService.getCategories(from, size));
     }
 

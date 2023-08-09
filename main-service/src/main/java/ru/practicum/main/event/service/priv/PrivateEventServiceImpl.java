@@ -97,7 +97,9 @@ public class PrivateEventServiceImpl implements PrivateEventService {
         validateUser(userId);
 
         if (createEventDto.getEventDate().minusHours(2).isBefore(LocalDateTime.now())) {
-            throw new BadRequestException("The event date and time should not be less than two hours from the current moment");
+
+            throw new BadRequestException("The event date and time should not be " +
+                    "less than two hours from the current moment." + " Start time: " + createEventDto.getEventDate());
         }
 
         User user = userRepository

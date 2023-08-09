@@ -16,12 +16,13 @@ import javax.validation.constraints.PositiveOrZero;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static ru.practicum.main.utils.Constants.DATE_TIME_FORMAT;
+
 @RestControllerAdvice
 @RequestMapping("events")
 @Slf4j
 @Validated
 public class PublicEventController {
-    private static final String DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
     private final PublicEventService publicEventService;
 
     public PublicEventController(PublicEventService publicEventService) {
