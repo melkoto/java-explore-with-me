@@ -34,10 +34,11 @@ public class AdminCompilationServiceImpl implements AdminCompilationService {
         Set<Long> eventIds = newCompilationDto.getEvents() == null ? Collections.emptySet() : newCompilationDto.getEvents();
         Set<Event> events = eventRepository.findAllByIdIn(eventIds);
         Compilation newCompilation = toCompilation(newCompilationDto, events);
-        Compilation savedCompilation = compilationRepository.save(newCompilation);
-        return toCompilationResponseDto(savedCompilation);
+        Compilation savedCompilation = compilationRepository.save(newCompilation); //TODO Тут не обязательно делать отдельную переменную. Метод save и так возвращает то что он сохраняет
+        return toCompilationResponseDto(savedCompilation); //TODO получится что-то такое compilationRepository.save(newCompilation)
     }
 
+    //TODO Transactional
     @Override
     public CompilationResponseDto updateCompilation(Long compilationId, UpdateCompilationDto updateCompilationRequest) {
         Compilation compilation = findCompilationById(compilationId);
@@ -53,6 +54,7 @@ public class AdminCompilationServiceImpl implements AdminCompilationService {
         return compilationResponseDto;
     }
 
+    //TODO Transactional
     @Override
     public CompilationResponseDto deleteCompilation(long id) {
         Compilation compilation = findCompilationById(id);
@@ -68,7 +70,7 @@ public class AdminCompilationServiceImpl implements AdminCompilationService {
                 new NotFoundException("Compilation with id = " + compilationId + " not found."));
     }
 
-    private void update(Compilation compilation, UpdateCompilationDto request) {
+    private void update(Compilation compilation, UpdateCompilationDto request) { //TODO Лучше бы чтобы метод возвращал то что он меняет, это ни на что не влияет в плане перформанса но лучше читается
         updateEventsIfPresent(compilation, request.getEvents());
         updatePinnedIfPresent(compilation, request.getPinned());
         updateTitleIfPresent(compilation, request.getTitle());

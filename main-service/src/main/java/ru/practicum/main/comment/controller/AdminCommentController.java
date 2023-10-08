@@ -28,8 +28,11 @@ public class AdminCommentController {
             @PositiveOrZero @RequestParam(defaultValue = "0", required = false) int from,
             @Positive @RequestParam(defaultValue = "10", required = false) int size) {
 
+        //TODO По моему слишком высокий уровеньт логирования. Я бы поставил дебаг. Но тут тоже у кого как принято.
         log.info("Get comments for user with id {}", userId);
 
+        //TODO В таких случаях (если нет специфичных кодов ответов или еще чего-то, то лучше использовать
+        // ResponseEntity.ok(service.getUserComments(userId, from, size));
         return ResponseEntity.status(200).body(service.getUserComments(userId, from, size));
     }
 

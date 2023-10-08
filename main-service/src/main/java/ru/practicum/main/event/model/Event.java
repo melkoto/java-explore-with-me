@@ -8,6 +8,8 @@ import ru.practicum.main.user.model.User;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
+//TODO Я вижу ты знаешь что такое Lombok. Аннотацию Data нельзя использовать над Entity,
+// там было что то с ID точно не помню, но помню что нельзя.
 @Data
 @Entity
 @Table(name = "events")

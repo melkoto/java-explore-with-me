@@ -26,6 +26,10 @@ public class PublicCompilationServiceImpl implements PublicCompilationService {
     public List<CompilationResponseDto> getCompilations(int offset, int limit, Boolean isPinned) {
         Pageable pageRequest = Pageable.ofSize(limit).withPage(offset);
 
+        //TODO Сложновато читается тернарный оператор лучше так
+        //List<Compilation> compilations =
+        //        isPinned ? compilationRepository.findAllByPinnedIsTrue(pageRequest).getContent()
+        //                 : compilationRepository.findAll(pageRequest).getContent();
         List<Compilation> compilations = isPinned ? compilationRepository.findAllByPinnedIsTrue(pageRequest).getContent()
                 : compilationRepository.findAll(pageRequest).getContent();
 

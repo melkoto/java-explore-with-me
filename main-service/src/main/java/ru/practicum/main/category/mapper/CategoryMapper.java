@@ -5,6 +5,7 @@ import ru.practicum.main.category.dto.CategoryResponseDto;
 import ru.practicum.main.category.model.Category;
 
 public class CategoryMapper {
+    //TODO Для маппинга лучше использовать либу ObjectMapper(для практики как минимум)
     public static Category mapCategoryDtoToCategory(CategoryDto categoryDto) {
         Category category = new Category();
         category.setName(categoryDto.getName());
