@@ -21,7 +21,7 @@ public class Compilation {
     Set<Event> events;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id; //TODO рассположи поле ИД сверху, ни разу не видел его ниже остальных. Соблюдай разрывы между полями, плохо читается.
     @Column(name = "pinned")
     private Boolean pinned;
 

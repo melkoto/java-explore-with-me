@@ -27,6 +27,8 @@ public class AdminCommentServiceImpl implements AdminCommentService {
 
     @Override
     public List<FullCommentResponseDto> getUserComments(Long userId, int from, int size) {
+        //TODO Это не есть хорошо, получать целого юзера только для того что бы получить другую сущность.
+        // Ты можешь сделать HQL запрос через аннотацию Query в репозитории
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User with id " + userId + " not found."));
 
@@ -40,6 +42,7 @@ public class AdminCommentServiceImpl implements AdminCommentService {
                 .collect(Collectors.toList());
     }
 
+    //TODO Transactional
     @Override
     public void deleteComment(Long commentId) {
         if (!commentRepository.existsById(commentId)) {

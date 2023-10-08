@@ -25,7 +25,7 @@ public class AdminCompilationController {
     @PostMapping
     public ResponseEntity<CompilationResponseDto> createCompilation(@Valid @RequestBody CreateCompilationDto dto) {
         log.info("createCompilation: {}", dto);
-        return ResponseEntity.status(201).body(adminCompilationService.createCompilation(dto));
+        return ResponseEntity.status(201).body(adminCompilationService.createCompilation(dto)); //TODO чтобы не делать проверку на нулл в методе сервиса, добави в параметры аннотацию @NotNull
     }
 
     @DeleteMapping("/{compId}")

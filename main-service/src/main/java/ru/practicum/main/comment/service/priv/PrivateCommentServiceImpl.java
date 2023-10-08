@@ -32,6 +32,7 @@ public class PrivateCommentServiceImpl implements PrivateCommentService {
 
     @Override
     public ShortCommentResponseDto addComment(CreateCommentDto dto, Long userId, Long eventId) {
+        //TODO Тут тоже не нужно брать сущности из БД
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User with id " + userId + " not found."));
         Event event = eventRepository.findById(eventId)
@@ -50,6 +51,7 @@ public class PrivateCommentServiceImpl implements PrivateCommentService {
         return responseDto;
     }
 
+    //TODO Transactional
     @Override
     public ShortCommentResponseDto updateComment(CreateCommentDto dto, Long commentId, String userId) {
         User user = userRepository.findById(Long.parseLong(userId))
@@ -68,6 +70,7 @@ public class PrivateCommentServiceImpl implements PrivateCommentService {
         return responseDto;
     }
 
+    //TODO Transactional
     @Override
     public void deleteComment(Long commentId, Long userId) {
         Comment comment =

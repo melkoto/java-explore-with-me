@@ -10,7 +10,7 @@ import java.util.Set;
 public class CompilationMapper {
     public static CompilationResponseDto toCompilationResponseDto(Compilation compilation) {
         if (compilation == null) {
-            return null;
+            return null; //TODO Очень плохая практика возвращать null
         }
 
         return new CompilationResponseDto(
